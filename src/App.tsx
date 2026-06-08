@@ -5,6 +5,7 @@ import { Dashboard } from './components/views/Dashboard';
 import { Research } from './components/views/Research';
 import { Sentiment } from './components/views/Sentiment';
 import { Alerts } from './components/views/Alerts';
+import { Settings } from './components/views/Settings';
 import { ReportDetail } from './components/views/ReportDetail';
 import { View } from './types';
 import { mockReports } from './mockData';
@@ -49,6 +50,8 @@ export default function App() {
         return <Sentiment />;
       case 'alerts':
         return <Alerts />;
+      case 'settings':
+        return <Settings />;
       default:
         return <Dashboard onSelectReport={handleSelectReport} />;
     }

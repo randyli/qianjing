@@ -57,7 +57,10 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
           <p className="text-xs text-slate-400">您已拥有AI洞察和实时情绪数据的完全访问权限。</p>
         </div>
         
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+        <button 
+          onClick={() => onViewChange('settings')}
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors"
+        >
           <Settings className="w-5 h-5 text-slate-500" />
           <span>设置</span>
         </button>

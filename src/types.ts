@@ -1,4 +1,4 @@
-export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'reportDetail';
+export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'reportDetail' | 'settings';
 
 export interface Report {
   id: string;
