@@ -1,0 +1,6 @@
+{
+  "name": "FinSight AI",
+  "description": "AI-driven financial analysis and market sentiment terminal",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
