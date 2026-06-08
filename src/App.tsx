@@ -12,6 +12,7 @@ import { mockReports } from './mockData';
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleSelectReport = (id: string) => {
     setSelectedReportId(id);
@@ -22,6 +23,13 @@ export default function App() {
     setSelectedReportId(null);
     // Go back to research or dashboard based on your preference, defaulting to research looks good
     setCurrentView('research');
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (term.trim() && currentView !== 'research' && currentView !== 'reportDetail') {
+      setCurrentView('research');
+    }
   };
 
   const renderView = () => {
@@ -36,7 +44,7 @@ export default function App() {
       case 'dashboard':
         return <Dashboard onSelectReport={handleSelectReport} />;
       case 'research':
-        return <Research onSelectReport={handleSelectReport} />;
+        return <Research onSelectReport={handleSelectReport} searchTerm={searchTerm} onSearch={handleSearch} />;
       case 'sentiment':
         return <Sentiment />;
       case 'alerts':
@@ -53,11 +61,14 @@ export default function App() {
         onViewChange={(view) => {
           setSelectedReportId(null);
           setCurrentView(view);
+          if (view !== 'research') {
+            setSearchTerm('');
+          }
         }} 
       />
       
       <main className="flex-1 flex flex-col min-w-0">
-        <Header />
+        <Header searchTerm={searchTerm} onSearch={handleSearch} />
         <div className="flex-1 overflow-auto p-8">
           <div className="max-w-7xl mx-auto pb-12">
             {renderView()}

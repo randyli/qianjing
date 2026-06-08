@@ -4,9 +4,22 @@ import { mockReports } from '../../mockData';
 
 interface ResearchProps {
   onSelectReport?: (id: string) => void;
+  searchTerm: string;
+  onSearch: (term: string) => void;
 }
 
-export function Research({ onSelectReport }: ResearchProps) {
+export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps) {
+  const filteredReports = mockReports.filter((report) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      report.title.toLowerCase().includes(term) ||
+      report.sector.toLowerCase().includes(term) ||
+      report.ticker?.toLowerCase().includes(term) ||
+      report.summary.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -20,6 +33,8 @@ export function Research({ onSelectReport }: ResearchProps) {
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
+              value={searchTerm}
+              onChange={(e) => onSearch(e.target.value)}
               placeholder="搜索报告..." 
               className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50"
             />
@@ -32,7 +47,7 @@ export function Research({ onSelectReport }: ResearchProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockReports.map((report) => (
+        {filteredReports.map((report) => (
           <div 
             key={report.id} 
             onClick={() => onSelectReport?.(report.id)}
