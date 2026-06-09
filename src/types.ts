@@ -1,31 +1,52 @@
 export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'reportDetail' | 'settings';
 
-export interface ValuationPoint {
-  year: string | number;
-  eps?: number;
-  pe?: number;
-  price?: number;
+export interface ReportFinancials {
+  revenue: string;
+  netProfit: string;
+  grossMargin?: string;
+  roe?: string;
+  netInterestMargin?: string;
+  dividendYield?: string;
+  freeCashFlow?: string;
+  capex?: string;
 }
 
-export interface ReportValuation {
-  currentPrice?: number | string;
-  targetPrice?: number | string;
-  upside?: number | string;
-  rating?: string;
-  years?: ValuationPoint[];
+export interface ReportFinancialPoint {
+  year: string;
+  revenue: number;
+  netProfit: number;
+  roe?: number;
+  margin?: number;
+}
+
+export interface ValuationPoint {
+  year: string;
+  eps: number;
+  pe: number;
+  price: number;
 }
 
 export interface Report {
   id: string;
   title: string;
+  companyName?: string;
   ticker?: string;
+  exchange?: string;
+  rating?: 'buy' | 'hold' | 'sell' | 'neutral' | string;
+  currentPrice?: number | string;
+  targetPrice?: number | string;
+  upside?: number | string;
+  valuation?: ValuationPoint[];
+  financials?: ReportFinancials | ReportFinancialPoint[];
+  investmentHighlights?: string[];
+  keyRisks?: string[];
+  thesis?: string;
   sector: string;
   summary: string;
   content?: string;
   impact: 'positive' | 'neutral' | 'negative';
   date: string;
   isPremium: boolean;
-  valuation?: ReportValuation;
 }
 
 export interface SentimentData {

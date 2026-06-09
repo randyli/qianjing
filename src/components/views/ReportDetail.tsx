@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Report, ReportValuation, ValuationPoint } from '../../types';
+import { Report, ValuationPoint } from '../../types';
 
 const formatNumber = (value?: number | string, options: Intl.NumberFormatOptions = {}) => {
   if (value === undefined || value === null || value === '') {
@@ -48,8 +48,8 @@ const formatUpside = (value?: number | string) => {
   return `${percentValue > 0 ? '+' : ''}${formatNumber(percentValue)}%`;
 };
 
-const getValuationChartData = (valuation?: ReportValuation) => (
-  valuation?.years?.filter((point): point is ValuationPoint => Boolean(point?.year)) ?? []
+const getValuationChartData = (valuation?: ValuationPoint[]) => (
+  valuation?.filter((point): point is ValuationPoint => Boolean(point?.year)) ?? []
 );
 
 interface ReportDetailProps {
@@ -63,10 +63,10 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
   const valuationChartData = getValuationChartData(report.valuation);
   const hasValuationData = Boolean(report.valuation) && (
     valuationChartData.length > 0 ||
-    report.valuation?.currentPrice !== undefined ||
-    report.valuation?.targetPrice !== undefined ||
-    report.valuation?.upside !== undefined ||
-    Boolean(report.valuation?.rating)
+    report.currentPrice !== undefined ||
+    report.targetPrice !== undefined ||
+    report.upside !== undefined ||
+    Boolean(report.rating)
   );
 
   return (
@@ -135,7 +135,7 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
         {/* Content Section */}
         <div className="mt-8 relative">
 
-          {hasValuationData && report.valuation && (
+          {hasValuationData && (
             <section className="mb-8 rounded-2xl border border-slate-800 bg-slate-950/60 p-6 shadow-lg shadow-slate-950/20">
               <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -153,21 +153,21 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
               <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
                   <p className="text-xs font-medium text-slate-500">当前价格</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-100">{formatPrice(report.valuation.currentPrice)}</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-100">{formatPrice(report.currentPrice)}</p>
                 </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
                   <p className="text-xs font-medium text-slate-500">目标价格</p>
-                  <p className="mt-2 text-2xl font-bold text-indigo-300">{formatPrice(report.valuation.targetPrice)}</p>
+                  <p className="mt-2 text-2xl font-bold text-indigo-300">{formatPrice(report.targetPrice)}</p>
                 </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
                   <p className="text-xs font-medium text-slate-500">潜在空间</p>
-                  <p className={`mt-2 text-2xl font-bold ${String(report.valuation.upside ?? '').startsWith('-') ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {formatUpside(report.valuation.upside)}
+                  <p className={`mt-2 text-2xl font-bold ${String(report.upside ?? '').startsWith('-') ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {formatUpside(report.upside)}
                   </p>
                 </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
                   <p className="text-xs font-medium text-slate-500">评级</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-100">{report.valuation.rating ?? '—'}</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-100">{report.rating ?? '—'}</p>
                 </div>
               </div>
 
