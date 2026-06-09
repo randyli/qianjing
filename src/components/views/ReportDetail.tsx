@@ -11,7 +11,6 @@ interface ReportDetailProps {
 export function ReportDetail({ report, onBack }: ReportDetailProps) {
   // Use abstract content if none provided
   const contentToRender = report.content || `## 数据收集中\n\nAI引擎正在生成更详尽的深度分析报告，请稍后再来查看完整内容。\n\n**摘要回顾:**\n${report.summary}`;
-  const isLocked = report.accessLevel === 'premium' || (!report.accessLevel && report.isPremium);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -78,7 +77,7 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
 
         {/* Content Section */}
         <div className="mt-8 relative">
-          {!isLocked ? (
+          {!report.isPremium ? (
             <div className="prose prose-invert prose-slate max-w-none prose-headings:text-slate-100 prose-a:text-indigo-400 prose-p:text-slate-300 prose-strong:text-slate-200">
                <div className="markdown-body">
                  <Markdown>{contentToRender}</Markdown>
