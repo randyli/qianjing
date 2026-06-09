@@ -8,6 +8,40 @@ interface ResearchProps {
   onSearch: (term: string) => void;
 }
 
+type ResearchReport = (typeof mockReports)[number] & {
+  companyName?: string;
+  isDemo?: boolean;
+  valuation?: unknown;
+  financials?: unknown;
+};
+
+const companyNameByTicker: Record<string, string> = {
+  NVDA: '英伟达',
+  '300750.SZ': '宁德时代',
+  ICLN: 'iShares全球清洁能源ETF',
+  '600519.SH': '贵州茅台',
+  '002594.SZ': '比亚迪',
+  '0700.HK': '腾讯控股',
+  XBI: 'SPDR生物科技ETF',
+};
+
+const valueInvestingReportIds = new Set(['1', '5', '6', '7', '8']);
+const demoReportIds = new Set(mockReports.map((report) => report.id));
+
+const getCompanyName = (report: ResearchReport) =>
+  report.companyName || (report.ticker ? companyNameByTicker[report.ticker.toUpperCase()] : undefined);
+
+const isAStock = (ticker?: string) => {
+  const normalizedTicker = ticker?.toUpperCase();
+  return normalizedTicker?.endsWith('.SH') || normalizedTicker?.endsWith('.SZ');
+};
+
+const hasValueInvestingData = (report: ResearchReport) =>
+  Boolean(report.valuation || report.financials || valueInvestingReportIds.has(report.id));
+
+const isDemoReport = (report: ResearchReport) =>
+  Boolean(report.isDemo || report.summary.includes('演示样例') || demoReportIds.has(report.id));
+
 export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps) {
   const filteredReports = mockReports.filter((report) => {
     if (!searchTerm.trim()) return true;
@@ -16,19 +50,10 @@ export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps
       report.title.toLowerCase().includes(term) ||
       report.sector.toLowerCase().includes(term) ||
       report.ticker?.toLowerCase().includes(term) ||
-      report.companyName?.toLowerCase().includes(term) ||
+      getCompanyName(report)?.toLowerCase().includes(term) ||
       report.summary.toLowerCase().includes(term)
     );
   });
-
-  const isAStock = (ticker?: string) => {
-    const normalizedTicker = ticker?.toUpperCase();
-    return normalizedTicker?.endsWith('.SH') || normalizedTicker?.endsWith('.SZ');
-  };
-  const hasValueInvestingData = (report: (typeof mockReports)[number]) =>
-    Boolean(report.valuation || report.financials);
-  const isDemoReport = (report: (typeof mockReports)[number]) =>
-    report.isDemo || report.summary.includes('演示样例');
 
   return (
     <div className="space-y-6">
