@@ -36,7 +36,7 @@ export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps
               value={searchTerm}
               onChange={(e) => onSearch(e.target.value)}
               placeholder="搜索报告..." 
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50"
+                className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50"
             />
           </div>
           <button className="flex items-center px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
@@ -47,52 +47,56 @@ export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredReports.map((report) => (
-          <div 
-            key={report.id} 
-            onClick={() => onSelectReport?.(report.id)}
-            className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-indigo-500/30 transition-all group flex flex-col h-full cursor-pointer relative overflow-hidden"
-          >
-            {report.isPremium && (
-              <div className="absolute top-4 right-4 text-amber-400">
-                <Lock className="w-4 h-4" />
-              </div>
-            )}
-            
-            <div className="flex items-center space-x-2 mb-4">
-              <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300 rounded">
-                {report.sector}
-              </span>
-              <span className="text-xs text-slate-500">{report.date}</span>
-            </div>
-            
-            <h3 className="text-lg font-semibold text-slate-100 mb-3 group-hover:text-indigo-300 transition-colors">
-              {report.title}
-            </h3>
-            
-            <p className="text-sm text-slate-400 flex-1 leading-relaxed mb-6">
-              {report.summary}
-            </p>
-            
-            <div className="mt-auto pt-4 border-t border-slate-800 flex items-center justify-between">
-              {report.ticker ? (
-                <span className="text-xs font-mono text-slate-500 border border-slate-800 px-2 py-1 rounded">
-                  ${report.ticker}
-                </span>
-              ) : (
-                <span className="text-xs text-slate-600">宏观分析</span>
+        {filteredReports.map((report) => {
+          const isLocked = report.accessLevel === 'premium' || (!report.accessLevel && report.isPremium);
+
+          return (
+            <div 
+              key={report.id} 
+              onClick={() => onSelectReport?.(report.id)}
+              className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-indigo-500/30 transition-all group flex flex-col h-full cursor-pointer relative overflow-hidden"
+            >
+              {isLocked && (
+                <div className="absolute top-4 right-4 text-amber-400">
+                  <Lock className="w-4 h-4" />
+                </div>
               )}
               
-              <span className={`text-xs font-medium px-2 py-1 rounded ${
-                report.impact === 'positive' ? 'text-emerald-400 bg-emerald-400/10' : 
-                report.impact === 'negative' ? 'text-rose-400 bg-rose-400/10' : 
-                'text-slate-400 bg-slate-800'
-              }`}>
-                {report.impact === 'positive' ? '看涨前景' : report.impact === 'negative' ? '看跌前景' : '中性前景'}
-              </span>
+              <div className="flex items-center space-x-2 mb-4">
+                <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300 rounded">
+                  {report.sector}
+                </span>
+                <span className="text-xs text-slate-500">{report.date}</span>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-slate-100 mb-3 group-hover:text-indigo-300 transition-colors">
+                {report.title}
+              </h3>
+              
+              <p className="text-sm text-slate-400 flex-1 leading-relaxed mb-6">
+                {report.summary}
+              </p>
+              
+              <div className="mt-auto pt-4 border-t border-slate-800 flex items-center justify-between">
+                {report.ticker ? (
+                  <span className="text-xs font-mono text-slate-500 border border-slate-800 px-2 py-1 rounded">
+                    ${report.ticker}
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-600">宏观分析</span>
+                )}
+                
+                <span className={`text-xs font-medium px-2 py-1 rounded ${
+                  report.impact === 'positive' ? 'text-emerald-400 bg-emerald-400/10' : 
+                  report.impact === 'negative' ? 'text-rose-400 bg-rose-400/10' : 
+                  'text-slate-400 bg-slate-800'
+                }`}>
+                  {report.impact === 'positive' ? '看涨前景' : report.impact === 'negative' ? '看跌前景' : '中性前景'}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

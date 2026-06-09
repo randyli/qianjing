@@ -1,5 +1,7 @@
 export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'reportDetail' | 'settings';
 
+export type ReportAccessLevel = 'free' | 'premium' | 'demo';
+
 export interface Report {
   id: string;
   title: string;
@@ -9,6 +11,13 @@ export interface Report {
   content?: string;
   impact: 'positive' | 'neutral' | 'negative';
   date: string;
+  /**
+   * Describes how the report should be gated in the UI.
+   * - free/demo reports render their content directly
+   * - premium reports render with the locked upgrade overlay
+   */
+  accessLevel?: ReportAccessLevel;
+  /** @deprecated Use accessLevel to avoid ambiguity between content type and user access. */
   isPremium: boolean;
 }
 
