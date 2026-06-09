@@ -1,13 +1,33 @@
 export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'reportDetail' | 'settings';
 
+export interface ReportFinancials {
+  revenue: string;
+  netProfit: string;
+  grossMargin?: string;
+  roe?: string;
+  netInterestMargin?: string;
+  dividendYield?: string;
+  freeCashFlow?: string;
+  capex?: string;
+}
+
 export interface Report {
   id: string;
   title: string;
+  companyName?: string;
   ticker?: string;
   sector: string;
   summary: string;
   content?: string;
   impact: 'positive' | 'neutral' | 'negative';
+  rating?: string;
+  currentPrice?: string;
+  targetPrice?: string;
+  upside?: string;
+  valuation?: string;
+  financials?: ReportFinancials;
+  investmentHighlights?: string[];
+  keyRisks?: string[];
   date: string;
   isPremium: boolean;
 }
