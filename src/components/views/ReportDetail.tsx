@@ -1,6 +1,18 @@
 import React from 'react';
 import { ArrowLeft, Lock, Share2, BookmarkPlus, Calendar, Box } from 'lucide-react';
 import Markdown from 'react-markdown';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Report } from '../../types';
 
 interface ReportDetailProps {
@@ -8,12 +20,16 @@ interface ReportDetailProps {
   onBack: () => void;
 }
 
+const chartTextColor = '#94a3b8';
+const gridColor = '#1e293b';
+
 export function ReportDetail({ report, onBack }: ReportDetailProps) {
   // Use abstract content if none provided
   const contentToRender = report.content || `## 数据收集中\n\nAI引擎正在生成更详尽的深度分析报告，请稍后再来查看完整内容。\n\n**摘要回顾:**\n${report.summary}`;
+  const hasValuationData = Boolean(report.valuationData?.length);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <button 
         onClick={onBack}
         className="flex items-center text-sm font-medium text-slate-400 hover:text-indigo-400 py-2 transition-colors"
@@ -78,10 +94,66 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
         {/* Content Section */}
         <div className="mt-8 relative">
           {report.isPremium ? (
-            <div className="prose prose-invert prose-slate max-w-none prose-headings:text-slate-100 prose-a:text-indigo-400 prose-p:text-slate-300 prose-strong:text-slate-200">
-               <div className="markdown-body">
-                 <Markdown>{contentToRender}</Markdown>
-               </div>
+            <div className="space-y-8">
+              {hasValuationData && (
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 sm:p-6 not-prose">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-100">股价拆分：EPS × PE</h2>
+                      <p className="text-sm text-slate-400 mt-1">柱状图为每股收益，折线图拆解股价与隐含市盈率变化。</p>
+                    </div>
+                    <span className="text-xs text-slate-500">单位：股价/ EPS 为元，PE 为倍</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <div className="h-[330px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={report.valuationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid stroke={gridColor} strokeDasharray="3 3" vertical={false} />
+                          <XAxis dataKey="year" tick={{ fill: chartTextColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fill: chartTextColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <Tooltip
+                            cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }}
+                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#f8fafc' }}
+                            formatter={(value, name) => [Number(value).toFixed(2), name === 'eps' ? 'EPS' : name]}
+                            labelStyle={{ color: '#cbd5e1' }}
+                          />
+                          <Bar dataKey="eps" name="EPS" fill="#818cf8" radius={[8, 8, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="h-[330px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={report.valuationData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                          <CartesianGrid stroke={gridColor} strokeDasharray="3 3" vertical={false} />
+                          <XAxis dataKey="year" tick={{ fill: chartTextColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <YAxis yAxisId="left" tick={{ fill: chartTextColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <YAxis yAxisId="right" orientation="right" tick={{ fill: chartTextColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#f8fafc' }}
+                            formatter={(value, name) => [Number(value).toFixed(2), name === 'price' ? '股价' : 'PE']}
+                            labelStyle={{ color: '#cbd5e1' }}
+                          />
+                          <Legend wrapperStyle={{ color: chartTextColor, fontSize: 12 }} />
+                          <Line yAxisId="left" type="monotone" dataKey="price" name="股价" stroke="#38bdf8" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                          <Line yAxisId="right" type="monotone" dataKey="pe" name="PE" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {report.valuationNote && (
+                    <p className="mt-4 text-xs leading-relaxed text-slate-500">{report.valuationNote}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="prose prose-invert prose-slate max-w-none prose-headings:text-slate-100 prose-a:text-indigo-400 prose-p:text-slate-300 prose-strong:text-slate-200">
+                 <div className="markdown-body">
+                   <Markdown>{contentToRender}</Markdown>
+                 </div>
+              </div>
             </div>
           ) : (
             <div className="prose prose-invert prose-slate max-w-none relative">

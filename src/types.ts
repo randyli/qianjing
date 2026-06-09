@@ -1,5 +1,13 @@
 export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'reportDetail' | 'settings';
 
+export interface ValuationPoint {
+  year: string;
+  price: number;
+  eps: number;
+  pe: number;
+  note?: string;
+}
+
 export interface Report {
   id: string;
   title: string;
@@ -10,6 +18,8 @@ export interface Report {
   impact: 'positive' | 'neutral' | 'negative';
   date: string;
   isPremium: boolean;
+  valuationData?: ValuationPoint[];
+  valuationNote?: string;
 }
 
 export interface SentimentData {
