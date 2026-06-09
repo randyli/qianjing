@@ -23,6 +23,128 @@ interface ReportDetailProps {
 const chartTextColor = '#94a3b8';
 const gridColor = '#1e293b';
 
+type MarkdownSection =
+  | { type: 'markdown'; content: string }
+  | { type: 'table'; headers: string[]; alignments: Array<'left' | 'center' | 'right'>; rows: string[][] };
+
+const tableDividerPattern = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+
+function splitTableRow(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((cell) => cell.trim());
+}
+
+function getColumnAlignments(dividerCells: string[]): Array<'left' | 'center' | 'right'> {
+  return dividerCells.map((cell) => {
+    const value = cell.trim();
+    const startsWithColon = value.startsWith(':');
+    const endsWithColon = value.endsWith(':');
+
+    if (startsWithColon && endsWithColon) return 'center';
+    if (endsWithColon) return 'right';
+    return 'left';
+  });
+}
+
+function parseMarkdownSections(content: string): MarkdownSection[] {
+  const lines = content.split('\n');
+  const sections: MarkdownSection[] = [];
+  const markdownBuffer: string[] = [];
+
+  const flushMarkdown = () => {
+    if (markdownBuffer.length === 0) return;
+
+    sections.push({ type: 'markdown', content: markdownBuffer.join('\n') });
+    markdownBuffer.length = 0;
+  };
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const nextLine = lines[index + 1];
+
+    if (line.includes('|') && nextLine && tableDividerPattern.test(nextLine)) {
+      flushMarkdown();
+
+      const headers = splitTableRow(line);
+      const alignments = getColumnAlignments(splitTableRow(nextLine));
+      const rows: string[][] = [];
+      index += 2;
+
+      while (index < lines.length && lines[index].includes('|') && lines[index].trim() !== '') {
+        rows.push(splitTableRow(lines[index]));
+        index += 1;
+      }
+
+      sections.push({ type: 'table', headers, alignments, rows });
+      index -= 1;
+    } else {
+      markdownBuffer.push(line);
+    }
+  }
+
+  flushMarkdown();
+  return sections;
+}
+
+function MarkdownInline({ children }: { children: string }) {
+  return (
+    <Markdown components={{ p: ({ children: paragraphChildren }) => <>{paragraphChildren}</> }}>
+      {children}
+    </Markdown>
+  );
+}
+
+function ReportMarkdown({ content }: { content: string }) {
+  return (
+    <>
+      {parseMarkdownSections(content).map((section, sectionIndex) => {
+        if (section.type === 'markdown') {
+          return <Markdown key={`markdown-${sectionIndex}`}>{section.content}</Markdown>;
+        }
+
+        return (
+          <div key={`table-${sectionIndex}`} className="my-6 overflow-x-auto rounded-xl border border-slate-700/80 bg-slate-950/60">
+            <table className="min-w-full border-collapse text-sm">
+              <thead className="bg-slate-800/80 text-slate-100">
+                <tr>
+                  {section.headers.map((header, columnIndex) => (
+                    <th
+                      key={`${header}-${columnIndex}`}
+                      className="border-b border-slate-700 px-4 py-3 font-semibold"
+                      style={{ textAlign: section.alignments[columnIndex] ?? 'left' }}
+                    >
+                      <MarkdownInline>{header}</MarkdownInline>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800 text-slate-300">
+                {section.rows.map((row, rowIndex) => (
+                  <tr key={`row-${rowIndex}`} className="hover:bg-slate-800/40">
+                    {section.headers.map((_, columnIndex) => (
+                      <td
+                        key={`cell-${rowIndex}-${columnIndex}`}
+                        className="px-4 py-3 align-top"
+                        style={{ textAlign: section.alignments[columnIndex] ?? 'left' }}
+                      >
+                        <MarkdownInline>{row[columnIndex] ?? ''}</MarkdownInline>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 export function ReportDetail({ report, onBack }: ReportDetailProps) {
   // Use abstract content if none provided
   const contentToRender = report.content || `## 数据收集中\n\nAI引擎正在生成更详尽的深度分析报告，请稍后再来查看完整内容。\n\n**摘要回顾:**\n${report.summary}`;
@@ -151,14 +273,14 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
 
               <div className="prose prose-invert prose-slate max-w-none prose-headings:text-slate-100 prose-a:text-indigo-400 prose-p:text-slate-300 prose-strong:text-slate-200">
                  <div className="markdown-body">
-                   <Markdown>{contentToRender}</Markdown>
+                   <ReportMarkdown content={contentToRender} />
                  </div>
               </div>
             </div>
           ) : (
             <div className="prose prose-invert prose-slate max-w-none relative">
                <div className="markdown-body blur-[4px] select-none opacity-40">
-                 <Markdown>{contentToRender}</Markdown>
+                 <ReportMarkdown content={contentToRender} />
                </div>
                <div className="absolute inset-0 flex flex-col items-center justify-center">
                  <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-sm">
