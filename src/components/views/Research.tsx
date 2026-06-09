@@ -16,9 +16,19 @@ export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps
       report.title.toLowerCase().includes(term) ||
       report.sector.toLowerCase().includes(term) ||
       report.ticker?.toLowerCase().includes(term) ||
+      report.companyName?.toLowerCase().includes(term) ||
       report.summary.toLowerCase().includes(term)
     );
   });
+
+  const isAStock = (ticker?: string) => {
+    const normalizedTicker = ticker?.toUpperCase();
+    return normalizedTicker?.endsWith('.SH') || normalizedTicker?.endsWith('.SZ');
+  };
+  const hasValueInvestingData = (report: (typeof mockReports)[number]) =>
+    Boolean(report.valuation || report.financials);
+  const isDemoReport = (report: (typeof mockReports)[number]) =>
+    report.isDemo || report.summary.includes('演示样例');
 
   return (
     <div className="space-y-6">
@@ -59,10 +69,25 @@ export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps
               </div>
             )}
             
-            <div className="flex items-center space-x-2 mb-4">
+            <div className="flex flex-wrap items-center gap-2 mb-4 pr-6">
               <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300 rounded">
                 {report.sector}
               </span>
+              {isAStock(report.ticker) && (
+                <span className="px-2 py-1 text-[10px] font-bold tracking-wider bg-red-500/10 text-red-300 border border-red-500/20 rounded">
+                  A股
+                </span>
+              )}
+              {hasValueInvestingData(report) && (
+                <span className="px-2 py-1 text-[10px] font-bold tracking-wider bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded">
+                  价值投资
+                </span>
+              )}
+              {isDemoReport(report) && (
+                <span className="px-2 py-1 text-[10px] font-bold tracking-wider bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded">
+                  演示样例
+                </span>
+              )}
               <span className="text-xs text-slate-500">{report.date}</span>
             </div>
             

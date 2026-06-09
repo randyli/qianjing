@@ -4,8 +4,12 @@ export interface Report {
   id: string;
   title: string;
   ticker?: string;
+  companyName?: string;
   sector: string;
   summary: string;
+  isDemo?: boolean;
+  valuation?: Record<string, string | number>;
+  financials?: Record<string, string | number>;
   content?: string;
   impact: 'positive' | 'neutral' | 'negative';
   date: string;
