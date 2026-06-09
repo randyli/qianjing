@@ -1,71 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Lock, Share2, BookmarkPlus, Calendar, Box } from 'lucide-react';
 import Markdown from 'react-markdown';
-import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Legend,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { Report } from '../../types';
-
-type ValuationPoint = {
-  year: string | number;
-  eps?: number;
-  pe?: number;
-  price?: number;
-};
-
-type ReportWithValuation = Report & {
-  rating?: string;
-  currentPrice?: number | string;
-  targetPrice?: number | string;
-  upside?: number | string;
-  valuation?: ValuationPoint[];
-};
-
-const formatNumber = (value?: number | string, options: Intl.NumberFormatOptions = {}) => {
-  if (value === undefined || value === null || value === '') {
-    return '—';
-  }
-
-  const numericValue = typeof value === 'number' ? value : Number(value);
-
-  if (Number.isNaN(numericValue)) {
-    return String(value);
-  }
-
-  return new Intl.NumberFormat('zh-CN', {
-    maximumFractionDigits: 2,
-    ...options,
-  }).format(numericValue);
-};
-
-const formatPrice = (value?: number | string) => formatNumber(value);
-
-const formatUpside = (value?: number | string) => {
-  if (value === undefined || value === null || value === '') {
-    return '—';
-  }
-
-  const numericValue = typeof value === 'number' ? value : Number(value);
-
-  if (Number.isNaN(numericValue)) {
-    return String(value);
-  }
-
-  const percentValue = Math.abs(numericValue) <= 1 ? numericValue * 100 : numericValue;
-  return `${percentValue > 0 ? '+' : ''}${formatNumber(percentValue)}%`;
-};
-
-const getValuationChartData = (valuation?: ValuationPoint[]) => (
-  valuation?.filter((point): point is ValuationPoint => Boolean(point?.year)) ?? []
-);
 
 interface ReportDetailProps {
   report: Report;
@@ -75,15 +11,6 @@ interface ReportDetailProps {
 export function ReportDetail({ report, onBack }: ReportDetailProps) {
   // Use abstract content if none provided
   const contentToRender = report.content || `## 数据收集中\n\nAI引擎正在生成更详尽的深度分析报告，请稍后再来查看完整内容。\n\n**摘要回顾:**\n${report.summary}`;
-  const valuationReport = report as ReportWithValuation;
-  const valuationChartData = getValuationChartData(valuationReport.valuation);
-  const hasValuationData = Boolean(valuationReport.valuation) && (
-    valuationChartData.length > 0 ||
-    valuationReport.currentPrice !== undefined ||
-    valuationReport.targetPrice !== undefined ||
-    valuationReport.upside !== undefined ||
-    Boolean(valuationReport.rating)
-  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -150,92 +77,6 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
 
         {/* Content Section */}
         <div className="mt-8 relative">
-
-          {hasValuationData && (
-            <section className="mb-8 rounded-2xl border border-slate-800 bg-slate-950/60 p-6 shadow-lg shadow-slate-950/20">
-              <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-400">Valuation Bridge</p>
-                  <h2 className="mt-2 text-2xl font-bold text-slate-100">估值拆解：Price = EPS × PE</h2>
-                  <p className="mt-2 text-sm text-slate-400">拆分盈利预测与估值倍数，快速定位目标价变化的核心驱动。</p>
-                </div>
-                {report.ticker && (
-                  <span className="w-fit rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-300">
-                    {report.ticker}
-                  </span>
-                )}
-              </div>
-
-              <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium text-slate-500">当前价格</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-100">{formatPrice(valuationReport.currentPrice)}</p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium text-slate-500">目标价格</p>
-                  <p className="mt-2 text-2xl font-bold text-indigo-300">{formatPrice(valuationReport.targetPrice)}</p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium text-slate-500">潜在空间</p>
-                  <p className={`mt-2 text-2xl font-bold ${String(valuationReport.upside ?? '').startsWith('-') ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {formatUpside(valuationReport.upside)}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium text-slate-500">评级</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-100">{valuationReport.rating ?? '—'}</p>
-                </div>
-              </div>
-
-              {valuationChartData.length > 0 && (
-                <div className="h-[360px] rounded-xl border border-slate-800 bg-slate-900/70 p-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={valuationChartData} margin={{ top: 12, right: 8, bottom: 8, left: 0 }}>
-                      <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                      <XAxis
-                        dataKey="year"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 12, fill: '#64748b' }}
-                        dy={10}
-                      />
-                      <YAxis
-                        yAxisId="left"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 12, fill: '#64748b' }}
-                        tickFormatter={(value) => formatNumber(value)}
-                        label={{ value: 'EPS / 股价', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 12 }}
-                      />
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 12, fill: '#64748b' }}
-                        tickFormatter={(value) => `${formatNumber(value)}x`}
-                        label={{ value: 'PE', angle: 90, position: 'insideRight', fill: '#94a3b8', fontSize: 12 }}
-                      />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px', color: '#f1f5f9' }}
-                        labelStyle={{ color: '#cbd5e1', fontWeight: 700 }}
-                        itemStyle={{ color: '#cbd5e1' }}
-                        formatter={(value, name) => {
-                          const labelMap: Record<string, string> = { eps: 'EPS', pe: 'PE', price: 'Price' };
-                          const formattedValue = name === 'pe' ? `${formatNumber(value as number)}x` : formatNumber(value as number);
-                          return [formattedValue, labelMap[String(name)] ?? String(name)];
-                        }}
-                      />
-                      <Legend wrapperStyle={{ color: '#cbd5e1', fontSize: 12, paddingTop: 12 }} />
-                      <Bar yAxisId="left" dataKey="price" name="Price" fill="#818cf8" radius={[6, 6, 0, 0]} maxBarSize={42} />
-                      <Line yAxisId="left" type="monotone" dataKey="eps" name="EPS" stroke="#34d399" strokeWidth={3} dot={{ r: 4, fill: '#34d399', strokeWidth: 0 }} />
-                      <Line yAxisId="right" type="monotone" dataKey="pe" name="PE" stroke="#fb7185" strokeWidth={3} dot={{ r: 4, fill: '#fb7185', strokeWidth: 0 }} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </section>
-          )}
           {report.isPremium ? (
             <div className="prose prose-invert prose-slate max-w-none prose-headings:text-slate-100 prose-a:text-indigo-400 prose-p:text-slate-300 prose-strong:text-slate-200">
                <div className="markdown-body">
