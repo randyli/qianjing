@@ -77,7 +77,7 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
 
         {/* Content Section */}
         <div className="mt-8 relative">
-          {!report.isPremium ? (
+          {report.isPremium ? (
             <div className="prose prose-invert prose-slate max-w-none prose-headings:text-slate-100 prose-a:text-indigo-400 prose-p:text-slate-300 prose-strong:text-slate-200">
                <div className="markdown-body">
                  <Markdown>{contentToRender}</Markdown>
