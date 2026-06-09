@@ -4,6 +4,17 @@ export interface Report {
   id: string;
   title: string;
   ticker?: string;
+  companyName?: string;
+  exchange?: string;
+  rating?: 'buy' | 'hold' | 'sell' | 'neutral';
+  targetPrice?: number;
+  currentPrice?: number;
+  upside?: number;
+  valuation?: { year: string; eps: number; pe: number; price: number }[];
+  financials?: { year: string; revenue: number; netProfit: number; roe?: number; margin?: number }[];
+  investmentHighlights?: string[];
+  keyRisks?: string[];
+  thesis?: string;
   sector: string;
   summary: string;
   content?: string;
