@@ -249,7 +249,7 @@ export const mockReports: Report[] = [
     investmentHighlights: ['浓香白酒品牌资产突出', '渠道利润修复带来弹性', '估值处于白酒龙头相对低位'],
     keyRisks: ['动销恢复不及预期', '渠道库存压力', '价格竞争加剧'],
     date: '2026-06-07',
-    isPremium: false,
+    isPremium: true,
   },
   {
     id: 'a-share-601899',
@@ -299,7 +299,7 @@ export const mockReports: Report[] = [
     investmentHighlights: ['铜金资源储备丰富', '全球化矿山运营能力突出', '金属价格上行带来盈利弹性'],
     keyRisks: ['商品价格下跌', '海外项目和国别风险', '资本开支超预算'],
     date: '2026-06-06',
-    isPremium: false,
+    isPremium: true,
   },
   {
     id: 'a-share-600276',
