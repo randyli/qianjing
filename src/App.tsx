@@ -10,9 +10,8 @@ import { Jobs } from './components/views/Jobs';
 import { ReportDetail } from './components/views/ReportDetail';
 import { Auth } from './components/views/Auth';
 import { Landing } from './components/views/Landing';
-import { View } from './types';
 import { api } from './api';
-import { CurrentUser, Report } from './types';
+import { CurrentUser, Report, View } from './types';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('landing');
@@ -22,7 +21,8 @@ export default function App() {
   const [reportLoading, setReportLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [authChecking, setAuthChecking] = useState(Boolean(api.getAuthToken()));
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [landingAuthMode, setLandingAuthMode] = useState<'login' | 'register' | null>(null);
+  const [postAuthView, setPostAuthView] = useState<View>('dashboard');
 
 
   useEffect(() => {
@@ -49,14 +49,17 @@ export default function App() {
     };
   }, []);
 
-  const handleAuthenticated = (user: CurrentUser) => {
+  const handleAuthenticated = (user: CurrentUser, nextView: View = postAuthView) => {
     setCurrentUser(user);
-    setCurrentView('dashboard');
+    setLandingAuthMode(null);
+    setCurrentView(nextView);
+    setPostAuthView('dashboard');
   };
 
-  const openAuth = (mode: 'login' | 'register' = 'login') => {
-    setAuthMode(mode);
-    setCurrentView('settings');
+  const openAuth = (mode: 'login' | 'register' = 'login', nextView: View = postAuthView) => {
+    setLandingAuthMode(mode);
+    setPostAuthView(nextView);
+    setCurrentView('landing');
   };
 
   const handleLogout = () => {
@@ -104,13 +107,34 @@ export default function App() {
     };
   }, [currentView, selectedReportId]);
 
+  const protectedViews: View[] = ['alerts', 'jobs', 'settings'];
+
+  const renderLanding = () => (
+    <Landing
+      user={currentUser}
+      authMode={landingAuthMode}
+      onLoginClick={() => openAuth('login')}
+      onRegisterClick={() => openAuth('register')}
+      onExploreClick={() => setCurrentView('research')}
+      onAuthenticated={handleAuthenticated}
+    />
+  );
+
   const renderView = () => {
-    if (authChecking && ['alerts', 'jobs', 'settings'].includes(currentView)) {
+    if (authChecking && protectedViews.includes(currentView)) {
       return <div className="text-slate-400">正在验证登录状态...</div>;
     }
 
-    if (!currentUser && ['alerts', 'jobs', 'settings'].includes(currentView)) {
-      return <Auth title="访问受保护页面前请登录" message="预警、设置和任务记录会读取您的个人数据，因此需要使用真实账户登录。" initialMode={authMode} onAuthenticated={handleAuthenticated} />;
+    if (!currentUser && protectedViews.includes(currentView)) {
+      const requestedView = currentView;
+      return (
+        <Auth
+          title="访问受保护页面前请登录"
+          message="预警、设置和任务记录会读取您的个人数据，因此需要使用真实账户登录。"
+          initialMode={landingAuthMode ?? 'login'}
+          onAuthenticated={(user) => handleAuthenticated(user, requestedView)}
+        />
+      );
     }
     if (currentView === 'reportDetail' && selectedReportId) {
       if (selectedReport) {
@@ -121,7 +145,7 @@ export default function App() {
 
     switch (currentView) {
       case 'landing':
-        return <Landing user={currentUser} onLogin={() => openAuth('login')} onRegister={() => openAuth('register')} onDashboard={() => setCurrentView(currentUser ? 'dashboard' : 'landing')} onPublicResearch={() => setCurrentView('research')} />;
+        return renderLanding();
       case 'dashboard':
         return <Dashboard onSelectReport={handleSelectReport} />;
       case 'research':
@@ -135,7 +159,7 @@ export default function App() {
       case 'settings':
         return <Settings user={currentUser} onLogout={handleLogout} onUserUpdated={setCurrentUser} />;
       default:
-        return <Landing user={currentUser} onLogin={() => openAuth('login')} onRegister={() => openAuth('register')} onDashboard={() => setCurrentView(currentUser ? 'dashboard' : 'landing')} onPublicResearch={() => setCurrentView('research')} />;
+        return renderLanding();
     }
   };
 
@@ -150,7 +174,11 @@ export default function App() {
         onLogout={handleLogout}
         onViewChange={(view) => {
           setSelectedReportId(null);
-          setCurrentView(view);
+          if (!currentUser && protectedViews.includes(view)) {
+            openAuth('login', view);
+          } else {
+            setCurrentView(view);
+          }
           if (view !== 'research') {
             setSearchTerm('');
           }
@@ -159,7 +187,7 @@ export default function App() {
       )}
       
       <main className="flex-1 flex flex-col min-w-0">
-        {!isLanding && <Header searchTerm={searchTerm} onSearch={handleSearch} user={currentUser} onAuthClick={() => openAuth('login')} onLogout={handleLogout} />}
+        {!isLanding && <Header searchTerm={searchTerm} onSearch={handleSearch} user={currentUser} onAuthClick={() => openAuth('login', 'dashboard')} onLogout={handleLogout} />}
         <div className="flex-1 overflow-auto p-8">
           <div className={isLanding ? 'w-full' : 'max-w-7xl mx-auto pb-12'}>
             {renderView()}
