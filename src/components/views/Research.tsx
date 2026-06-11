@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, Filter, Lock } from 'lucide-react';
-import { mockReports } from '../../mockData';
+import { api } from '../../api';
+import { Report } from '../../types';
 
 interface ResearchProps {
   onSelectReport?: (id: string) => void;
@@ -9,16 +10,31 @@ interface ResearchProps {
 }
 
 export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps) {
-  const filteredReports = mockReports.filter((report) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      report.title.toLowerCase().includes(term) ||
-      report.sector.toLowerCase().includes(term) ||
-      report.ticker?.toLowerCase().includes(term) ||
-      report.summary.toLowerCase().includes(term)
-    );
-  });
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    api.listReports(searchTerm)
+      .then((items) => {
+        if (!cancelled) {
+          setReports(items);
+          setError(null);
+        }
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -46,8 +62,11 @@ export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps
         </div>
       </div>
 
+      {error && <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">{error}</div>}
+      {loading && <div className="text-sm text-slate-500">正在从后台 API 加载研报...</div>}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredReports.map((report) => (
+        {reports.map((report) => (
           <div 
             key={report.id} 
             onClick={() => onSelectReport?.(report.id)}
@@ -94,6 +113,8 @@ export function Research({ onSelectReport, searchTerm, onSearch }: ResearchProps
           </div>
         ))}
       </div>
+
+      {!loading && reports.length === 0 && <div className="text-sm text-slate-500">没有找到匹配的研报。</div>}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Activity, AlertTriangle, ChevronRight, Zap, BookOpen, BellRing, Star, Plus } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { mockSentiment, mockReports, mockAlerts } from '../../mockData';
+import { api } from '../../api';
+import { Report, SectorAlert, SentimentData } from '../../types';
 import { cn } from '../../utils';
 
 interface DashboardProps {
@@ -12,9 +13,15 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
   const [mounted, setMounted] = useState(false);
   const [watchlist, setWatchlist] = useState<string[]>(['300750.SZ', '600519.SH', '002594.SZ', '0700.HK']);
   const [newTicker, setNewTicker] = useState('');
+  const [reports, setReports] = useState<Report[]>([]);
+  const [sentiment, setSentiment] = useState<SentimentData[]>([]);
+  const [alerts, setAlerts] = useState<SectorAlert[]>([]);
 
   useEffect(() => {
     setMounted(true);
+    api.listReports().then(setReports).catch(() => setReports([]));
+    api.getSentimentPoints().then(setSentiment).catch(() => setSentiment([]));
+    api.listAlerts().then(setAlerts).catch(() => setAlerts([]));
   }, []);
 
   const handleAddTicker = (e: React.FormEvent) => {
@@ -25,8 +32,8 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
     }
   };
 
-  const topReports = mockReports.slice(0, 2);
-  const activeAlerts = mockAlerts.filter(a => a.enabled).slice(0, 3);
+  const topReports = reports.slice(0, 2);
+  const activeAlerts = alerts.filter(a => a.enabled).slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -67,7 +74,7 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
             </span>
           </div>
           <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-bold text-slate-100">{mockAlerts.filter(a => a.enabled).length}</span>
+            <span className="text-3xl font-bold text-slate-100">{alerts.filter(a => a.enabled).length}</span>
             <span className="text-sm font-medium text-slate-500">个板块追踪中</span>
           </div>
           <div className="flex mt-2 space-x-1">
@@ -105,7 +112,7 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
         <div className="h-[300px] w-full">
           {mounted ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockSentiment} margin={{ top: 10, left: -20, right: 0, bottom: 0 }}>
+              <AreaChart data={sentiment} margin={{ top: 10, left: -20, right: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
@@ -254,7 +261,7 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {watchlist.map(ticker => {
-            const report = mockReports.find(r => r.ticker === ticker);
+            const report = reports.find(r => r.ticker === ticker);
             return (
               <div 
                 key={ticker} 

@@ -1,9 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, BellRing, Monitor, Shield, CreditCard, ChevronRight } from 'lucide-react';
+import { api } from '../../api';
 import { cn } from '../../utils';
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState('account');
+  const [settings, setSettings] = useState({ notificationEmail: 'demo@example.com', dailyDigestEnabled: true, watchlistAlertEnabled: true, theme: 'dark' });
+  const [subscriptionEnd, setSubscriptionEnd] = useState('2026-07-08');
+
+  useEffect(() => {
+    api.getSettings().then((payload) => {
+      if (payload.settings) setSettings(payload.settings);
+      if (payload.subscription) setSubscriptionEnd(payload.subscription.currentPeriodEnd.slice(0, 10));
+    }).catch(() => undefined);
+  }, []);
+
+  const saveSettings = () => {
+    api.updateSettings(settings).then((payload) => setSettings(payload.settings)).catch(() => undefined);
+  };
 
   const tabs = [
     { id: 'account', label: '账户', icon: User },
@@ -66,12 +80,12 @@ export function Settings() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-400">电子邮件邮箱地址</label>
-                    <input type="email" defaultValue="alex@finsight-ai.com" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50" />
+                    <input type="email" value={settings.notificationEmail} onChange={(event) => setSettings({ ...settings, notificationEmail: event.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50" />
                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-end">
-                  <button className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors">
+                  <button onClick={saveSettings} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors">
                     保存更改
                   </button>
                 </div>
@@ -87,26 +101,30 @@ export function Settings() {
               </div>
               <div className="p-6 space-y-6">
                 {[
-                  { title: '包含最新研报的每日摘要', desc: '每天早晨收到一份由AI生成的市场洞察摘要。', defaultOn: true },
-                  { title: '自选股情绪异动预警', desc: '当自选股情绪得分由于突发新闻大幅波动时接收推送。', defaultOn: true },
-                  { title: '新的AI深度报告发布', desc: '当关于您关注领域的全新长篇研究发布时接收通知。', defaultOn: false },
+                  { title: '包含最新研报的每日摘要', desc: '每天早晨收到一份由AI生成的市场洞察摘要。', key: 'dailyDigestEnabled' as const },
+                  { title: '自选股情绪异动预警', desc: '当自选股情绪得分由于突发新闻大幅波动时接收推送。', key: 'watchlistAlertEnabled' as const },
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between">
                     <div>
                       <h3 className="font-medium text-slate-200">{item.title}</h3>
                       <p className="text-sm text-slate-500">{item.desc}</p>
                     </div>
-                    <button className={cn(
+                    <button onClick={() => setSettings({ ...settings, [item.key]: !settings[item.key] })} className={cn(
                       "w-12 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0",
-                      item.defaultOn ? "bg-indigo-500" : "bg-slate-700"
+                      settings[item.key] ? "bg-indigo-500" : "bg-slate-700"
                     )}>
                       <span className={cn(
                         "absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200",
-                        item.defaultOn ? "translate-x-6" : "translate-x-0"
+                        settings[item.key] ? "translate-x-6" : "translate-x-0"
                       )} />
                     </button>
                   </div>
                 ))}
+                <div className="pt-2 flex justify-end">
+                  <button onClick={saveSettings} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors">
+                    保存通知设置
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -151,7 +169,7 @@ export function Settings() {
                     </div>
                     <div className="text-right">
                        <p className="text-2xl font-bold text-slate-100">¥299<span className="text-sm text-slate-500 font-normal"> / 月</span></p>
-                       <p className="text-xs text-slate-500 mt-1">下次续费日期：2026-07-08</p>
+                       <p className="text-xs text-slate-500 mt-1">下次续费日期：{subscriptionEnd}</p>
                     </div>
                  </div>
                  

@@ -1,17 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Activity, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { mockSentiment } from '../../mockData';
+import { api } from '../../api';
+import { SentimentData } from '../../types';
 
 export function Sentiment() {
-  const sectors = [
-    { name: '科技', score: 82, trend: 5.4 },
-    { name: '能源', score: 45, trend: -2.1 },
-    { name: '医疗保健', score: 38, trend: -8.5 },
-    { name: '金融', score: 65, trend: 1.2 },
-    { name: '消费', score: 75, trend: 12.4 },
-    { name: '房地产', score: 28, trend: -0.5 },
-  ];
+  const [sentiment, setSentiment] = useState<SentimentData[]>([]);
+  const [sectors, setSectors] = useState<Array<{ name: string; score: number; trend: number }>>([]);
+
+  useEffect(() => {
+    api.getSentimentPoints().then(setSentiment).catch(() => setSentiment([]));
+    api.getSentimentOverview().then((overview) => setSectors(overview.sectors)).catch(() => setSectors([]));
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -37,7 +37,7 @@ export function Sentiment() {
           </h2>
           <div className="flex-1 min-h-[400px]">
              <ResponsiveContainer width="100%" height="100%">
-               <AreaChart data={mockSentiment} margin={{ top: 10, left: -20, right: 0, bottom: 0 }}>
+               <AreaChart data={sentiment} margin={{ top: 10, left: -20, right: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorGlobal" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
