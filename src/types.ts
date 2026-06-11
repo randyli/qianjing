@@ -1,4 +1,4 @@
-export type View = 'landing' | 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'jobs' | 'reportDetail' | 'settings';
+export type View = 'landing' | 'dashboard' | 'research' | 'sentiment' | 'marketTools' | 'alerts' | 'jobs' | 'reportDetail' | 'settings';
 
 export interface CurrentUser {
   id: string;
@@ -84,4 +84,50 @@ export interface JobRecord {
   createdAt: string;
   updatedAt: string;
   finishedAt: string | null;
+}
+
+
+export interface PeBandPoint {
+  tradeDate: string;
+  close: number;
+  peTtm: number;
+  ttmEps: number;
+  bands: Record<string, number>;
+}
+
+export interface PeBandData {
+  target: {
+    tsCode: string;
+    name: string;
+    currency: 'CNY';
+  };
+  range: {
+    startDate: string;
+    endDate: string;
+    actualStartDate: string;
+    actualEndDate: string;
+  };
+  multiples: number[];
+  metrics: {
+    latestClose: number;
+    latestTradeDate: string;
+    latestPeTtm: number;
+    latestTtmEps: number;
+    priceChangePct: number;
+    ttmEpsChangePct: number;
+  };
+  series: PeBandPoint[];
+  financialMarkers: Array<{
+    period: string;
+    endDate: string;
+    annDate: string;
+    basicEps: number;
+  }>;
+  source?: {
+    provider: string;
+    apis: string[];
+    fetchedAt: string;
+    cacheHit: boolean;
+  };
+  warnings: string[];
 }

@@ -6,6 +6,7 @@ import { migrate } from './db/schema';
 import { seed } from './db/seed';
 import { AuthenticatedRequest, createPasswordHash, createToken, requireAuth, verifyPassword } from './shared/auth';
 import { asBoolean, asNumber, asString, badRequest } from './shared/validation';
+import { marketRoutes } from './modules/market/marketRoutes';
 
 interface ReportRow {
   id: string;
@@ -184,6 +185,7 @@ function healthResponse(_req: express.Request, res: express.Response) {
 
 app.get('/health', healthResponse);
 app.get('/api/v1/health', healthResponse);
+app.use('/api/v1/market', marketRoutes);
 
 app.post('/api/v1/auth/register', (req, res) => {
   const email = asString(req.body?.email).toLowerCase();

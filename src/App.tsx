@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './components/views/Dashboard';
 import { Research } from './components/views/Research';
+import { MarketTools } from './components/views/MarketTools';
 import { Sentiment } from './components/views/Sentiment';
 import { Alerts } from './components/views/Alerts';
 import { Settings } from './components/views/Settings';
@@ -152,6 +153,8 @@ export default function App() {
         return <Research onSelectReport={handleSelectReport} searchTerm={searchTerm} onSearch={handleSearch} />;
       case 'sentiment':
         return <Sentiment />;
+      case 'marketTools':
+        return <MarketTools />;
       case 'alerts':
         return <Alerts />;
       case 'jobs':
