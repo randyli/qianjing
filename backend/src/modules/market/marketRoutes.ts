@@ -1,8 +1,19 @@
 import { Router } from 'express';
 import { getPeBandData } from './peBandService';
 import { TushareError } from './tushareClient';
+import { searchStocks } from './stockSearchService';
 
 export const marketRoutes = Router();
+
+marketRoutes.get('/stocks', (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q : '';
+  const limit = typeof req.query.limit === 'string' ? req.query.limit : undefined;
+  try {
+    res.json({ data: searchStocks(q, limit) });
+  } catch (error) {
+    res.status(500).json({ error: { code: 'stock_search_error', message: error instanceof Error ? error.message : '股票搜索失败。' } });
+  }
+});
 
 marketRoutes.get('/pe-band', async (req, res) => {
   try {

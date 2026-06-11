@@ -87,6 +87,16 @@ export interface JobRecord {
 }
 
 
+export type StockMatchType = 'symbol_prefix' | 'ts_code_prefix' | 'pinyin_prefix' | 'initials_prefix' | 'name_contains';
+
+export interface StockSearchResult {
+  tsCode: string;
+  symbol: string;
+  name: string;
+  market?: string;
+  matchType: StockMatchType;
+}
+
 export interface PeBandPoint {
   tradeDate: string;
   close: number;

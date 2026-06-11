@@ -1,3 +1,4 @@
+import { StockSuggestInput } from '../StockSuggestInput';
 interface PeBandControlsProps {
   tsCode: string;
   range: string;
@@ -15,12 +16,7 @@ export function PeBandControls({ tsCode, range, multiplesText, loading, onTsCode
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_0.8fr_1.2fr_auto] lg:items-end">
         <label className="space-y-2">
           <span className="text-sm font-medium text-slate-300">A 股代码</span>
-          <input
-            value={tsCode}
-            onChange={(event) => onTsCodeChange(event.target.value.toUpperCase())}
-            placeholder="600519.SH"
-            className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-indigo-500"
-          />
+          <StockSuggestInput value={tsCode} onChange={onTsCodeChange} disabled={loading} />
         </label>
         <label className="space-y-2">
           <span className="text-sm font-medium text-slate-300">时间范围</span>
@@ -52,7 +48,7 @@ export function PeBandControls({ tsCode, range, multiplesText, loading, onTsCode
           {loading ? '生成中...' : '生成图表'}
         </button>
       </div>
-      <p className="mt-3 text-xs text-slate-500">支持 Tushare 标准代码，例如 600519.SH、000001.SZ。通道倍数用英文逗号分隔。</p>
+      <p className="mt-3 text-xs text-slate-500">支持代码、拼音、首字母或中文名称搜索，也可直接输入 Tushare 标准代码，例如 600519.SH。通道倍数用英文逗号分隔。</p>
     </div>
   );
 }

@@ -122,6 +122,12 @@ async function requestTushare(apiName: TushareApiName, params: Record<string, un
   return toRows(payload);
 }
 
+export async function fetchFreshTushareRows(apiName: TushareApiName, params: Record<string, unknown>, fields: string[], ttlHours: number) {
+  const rows = await requestTushare(apiName, params, fields);
+  const written = writeCache('tushare', apiName, cacheKey(apiName, params, fields), params, rows, ttlHours);
+  return { rows, fetchedAt: written.fetchedAt };
+}
+
 export async function fetchTushareRows(apiName: TushareApiName, params: Record<string, unknown>, fields: string[], ttlHours: number) {
   const key = cacheKey(apiName, params, fields);
   const fresh = getFreshCache(key);
@@ -130,9 +136,8 @@ export async function fetchTushareRows(apiName: TushareApiName, params: Record<s
   }
 
   try {
-    const rows = await requestTushare(apiName, params, fields);
-    const written = writeCache('tushare', apiName, key, params, rows, ttlHours);
-    return { rows, fetchedAt: written.fetchedAt, cacheHit: false, stale: false };
+    const fresh = await fetchFreshTushareRows(apiName, params, fields, ttlHours);
+    return { rows: fresh.rows, fetchedAt: fresh.fetchedAt, cacheHit: false, stale: false };
   } catch (error) {
     const stale = getAnyCache(key);
     if (stale) {
