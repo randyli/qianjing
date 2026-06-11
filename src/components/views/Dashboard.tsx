@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Activity, AlertTriangle, ChevronRight, Zap, BookOpen, BellRing, Star, Plus } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../../api';
-import { Report, SectorAlert, SentimentData } from '../../types';
+import { AlertTrigger, Report, SectorAlert, SentimentData } from '../../types';
 import { cn } from '../../utils';
 
 interface DashboardProps {
@@ -16,12 +16,14 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
   const [reports, setReports] = useState<Report[]>([]);
   const [sentiment, setSentiment] = useState<SentimentData[]>([]);
   const [alerts, setAlerts] = useState<SectorAlert[]>([]);
+  const [triggers, setTriggers] = useState<AlertTrigger[]>([]);
 
   useEffect(() => {
     setMounted(true);
     api.listReports().then(setReports).catch(() => setReports([]));
     api.getSentimentPoints().then(setSentiment).catch(() => setSentiment([]));
     api.listAlerts().then(setAlerts).catch(() => setAlerts([]));
+    api.getAlertTriggers().then(setTriggers).catch(() => setTriggers([]));
   }, []);
 
   const handleAddTicker = (e: React.FormEvent) => {
@@ -96,7 +98,7 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
           </div>
           <div className="flex space-x-2">
             {['1天', '1周', '1月', '3月'].map((t, i) => (
-              <button 
+              <button
                 key={t}
                 className={cn(
                   "px-3 py-1 text-xs font-medium rounded-md transition-colors",
@@ -108,7 +110,7 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
             ))}
           </div>
         </div>
-        
+
         <div className="h-[300px] w-full">
           {mounted ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -119,29 +121,29 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
                     <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis 
-                  dataKey="time" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#64748b' }} 
-                  dy={10} 
+                <XAxis
+                  dataKey="time"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  dy={10}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#64748b' }}
                 />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px', color: '#f1f5f9' }}
                   itemStyle={{ color: '#818cf8' }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="score" 
-                  stroke="#818cf8" 
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#818cf8"
                   strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorScore)" 
+                  fillOpacity={1}
+                  fill="url(#colorScore)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -164,11 +166,11 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
               查看全部 <ChevronRight className="w-4 h-4 ml-1" />
             </button>
           </div>
-          
+
           <div className="space-y-4">
             {topReports.map((report) => (
-              <div 
-                key={report.id} 
+              <div
+                key={report.id}
                 onClick={() => onSelectReport?.(report.id)}
                 className="p-4 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer group"
               >
@@ -206,30 +208,21 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
               触发的预警
             </h2>
           </div>
-          
-          <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 relative overflow-hidden">
-               <div className="absolute top-0 left-0 w-1 h-full bg-rose-500"></div>
-               <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium text-rose-400 mb-1">波动率飙升：新能源 (A股)</h4>
-                    <p className="text-sm text-slate-300">过去一小时内 $300750.SZ 的政策讨论热度上涨 400%。AI 检测到可能存在的产业链补贴调整传闻。</p>
-                  </div>
-                  <span className="text-xs text-slate-500">12 分钟前</span>
-               </div>
-            </div>
 
-            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 relative overflow-hidden">
-               <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-               <div className="flex justify-between items-start">
+          <div className="space-y-4">
+            {triggers.slice(0, 3).map((trigger) => (
+              <div key={trigger.id} className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                <div className="flex justify-between items-start gap-4">
                   <div>
-                    <h4 className="font-medium text-emerald-400 mb-1">情绪转变：零售</h4>
-                    <p className="text-sm text-slate-300">非必需消费品板块情绪越过您的预警阈值 70（当前：75）。</p>
+                    <h4 className="font-medium text-amber-300 mb-1">{trigger.targetKey} / {trigger.score}</h4>
+                    <p className="text-sm text-slate-300">{trigger.message}</p>
                   </div>
-                  <span className="text-xs text-slate-500">2 小时前</span>
-               </div>
-            </div>
-            
+                  <span className="text-xs text-slate-500 whitespace-nowrap">{new Date(trigger.triggeredAt).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+            {triggers.length === 0 && <div className="text-sm text-slate-500">暂无触发历史，可在智能预警页面扫描生成。</div>}
             <button className="w-full py-3 border border-slate-700 border-dashed rounded-lg text-sm text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-colors flex items-center justify-center">
               配置新的预警条件
             </button>
@@ -244,13 +237,13 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
             <Star className="w-5 h-5 mr-2 text-amber-400" />
             自选股监控
           </h2>
-          
+
           <form onSubmit={handleAddTicker} className="flex items-center space-x-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={newTicker}
               onChange={(e) => setNewTicker(e.target.value)}
-              placeholder="添加代码 (如: 600519.SH)" 
+              placeholder="添加代码 (如: 600519.SH)"
               className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50"
             />
             <button type="submit" className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors">
@@ -263,8 +256,8 @@ export function Dashboard({ onSelectReport }: DashboardProps) {
           {watchlist.map(ticker => {
             const report = reports.find(r => r.ticker === ticker);
             return (
-              <div 
-                key={ticker} 
+              <div
+                key={ticker}
                 onClick={() => report && onSelectReport?.(report.id)}
                 className={cn(
                   "p-4 rounded-lg border flex flex-col justify-between transition-colors",

@@ -1,4 +1,4 @@
-export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'reportDetail' | 'settings';
+export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'jobs' | 'reportDetail' | 'settings';
 
 export interface ValuationPoint {
   year: string;
@@ -27,9 +27,47 @@ export interface SentimentData {
   score: number;
 }
 
+export interface SentimentEvent {
+  id: string;
+  targetType: string;
+  targetKey: string;
+  title: string;
+  reason: string;
+  scoreDelta: number;
+  occurredAt: string;
+}
+
 export interface SectorAlert {
   id: string;
   sector: string;
+  targetType?: string;
+  targetKey?: string;
   enabled: boolean;
-  threshold: number; // e.g., trigger if sentiment drops below this or jumps above
+  threshold: number;
+  direction?: 'above' | 'below';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AlertTrigger {
+  id: string;
+  alertId?: string;
+  targetKey: string;
+  score: number;
+  message: string;
+  triggeredAt: string;
+  readAt?: string | null;
+}
+
+export interface JobRecord {
+  id: string;
+  type: string;
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+  input: Record<string, unknown>;
+  result: Record<string, unknown> | null;
+  error: string | null;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  finishedAt: string | null;
 }
