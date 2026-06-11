@@ -9,18 +9,20 @@ import { Settings } from './components/views/Settings';
 import { Jobs } from './components/views/Jobs';
 import { ReportDetail } from './components/views/ReportDetail';
 import { Auth } from './components/views/Auth';
+import { Landing } from './components/views/Landing';
 import { View } from './types';
 import { api } from './api';
 import { CurrentUser, Report } from './types';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [currentView, setCurrentView] = useState<View>('landing');
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [authChecking, setAuthChecking] = useState(Boolean(api.getAuthToken()));
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
 
   useEffect(() => {
@@ -49,13 +51,19 @@ export default function App() {
 
   const handleAuthenticated = (user: CurrentUser) => {
     setCurrentUser(user);
+    setCurrentView('dashboard');
+  };
+
+  const openAuth = (mode: 'login' | 'register' = 'login') => {
+    setAuthMode(mode);
+    setCurrentView('settings');
   };
 
   const handleLogout = () => {
     api.clearAuthToken();
     setCurrentUser(null);
     if (['alerts', 'jobs', 'settings'].includes(currentView)) {
-      setCurrentView('dashboard');
+      setCurrentView('landing');
     }
   };
 
@@ -102,7 +110,7 @@ export default function App() {
     }
 
     if (!currentUser && ['alerts', 'jobs', 'settings'].includes(currentView)) {
-      return <Auth title="访问受保护页面前请登录" message="预警、设置和任务记录会读取您的个人数据，因此需要使用真实账户登录。" onAuthenticated={handleAuthenticated} />;
+      return <Auth title="访问受保护页面前请登录" message="预警、设置和任务记录会读取您的个人数据，因此需要使用真实账户登录。" initialMode={authMode} onAuthenticated={handleAuthenticated} />;
     }
     if (currentView === 'reportDetail' && selectedReportId) {
       if (selectedReport) {
@@ -112,6 +120,8 @@ export default function App() {
     }
 
     switch (currentView) {
+      case 'landing':
+        return <Landing user={currentUser} onLogin={() => openAuth('login')} onRegister={() => openAuth('register')} onDashboard={() => setCurrentView(currentUser ? 'dashboard' : 'landing')} onPublicResearch={() => setCurrentView('research')} />;
       case 'dashboard':
         return <Dashboard onSelectReport={handleSelectReport} />;
       case 'research':
@@ -125,13 +135,16 @@ export default function App() {
       case 'settings':
         return <Settings user={currentUser} onLogout={handleLogout} onUserUpdated={setCurrentUser} />;
       default:
-        return <Dashboard onSelectReport={handleSelectReport} />;
+        return <Landing user={currentUser} onLogin={() => openAuth('login')} onRegister={() => openAuth('register')} onDashboard={() => setCurrentView(currentUser ? 'dashboard' : 'landing')} onPublicResearch={() => setCurrentView('research')} />;
     }
   };
 
+  const isLanding = currentView === 'landing';
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 flex font-sans selection:bg-indigo-500/30">
-      <Sidebar 
+      {!isLanding && (
+        <Sidebar
         currentView={currentView === 'reportDetail' ? 'research' : currentView}
         user={currentUser}
         onLogout={handleLogout}
@@ -142,12 +155,13 @@ export default function App() {
             setSearchTerm('');
           }
         }} 
-      />
+        />
+      )}
       
       <main className="flex-1 flex flex-col min-w-0">
-        <Header searchTerm={searchTerm} onSearch={handleSearch} user={currentUser} onAuthClick={() => setCurrentView('settings')} onLogout={handleLogout} />
+        {!isLanding && <Header searchTerm={searchTerm} onSearch={handleSearch} user={currentUser} onAuthClick={() => openAuth('login')} onLogout={handleLogout} />}
         <div className="flex-1 overflow-auto p-8">
-          <div className="max-w-7xl mx-auto pb-12">
+          <div className={isLanding ? 'w-full' : 'max-w-7xl mx-auto pb-12'}>
             {renderView()}
           </div>
         </div>

@@ -7,11 +7,12 @@ import { cn } from '../../utils';
 interface AuthProps {
   title?: string;
   message?: string;
+  initialMode?: 'login' | 'register';
   onAuthenticated: (user: CurrentUser) => void;
 }
 
-export function Auth({ title = '请先登录', message = '登录后即可访问您的预警、任务记录和账户设置。', onAuthenticated }: AuthProps) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+export function Auth({ title = '请先登录', message = '登录后即可访问您的预警、任务记录和账户设置。', initialMode = 'login', onAuthenticated }: AuthProps) {
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
