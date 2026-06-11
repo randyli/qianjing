@@ -229,6 +229,22 @@ app.post('/api/v1/auth/login', (req, res) => {
   res.json({ token: createToken(user), user });
 });
 
+app.patch('/api/v1/me', requireAuth, (req: AuthenticatedRequest, res) => {
+  const displayName = asString(req.body?.displayName);
+  if (!displayName) return badRequest(res, 'displayName 不能为空。');
+  if (displayName.length > 50) return badRequest(res, 'displayName 长度必须在 1-50 个字符之间。');
+
+  const now = nowIso();
+  db.prepare('UPDATE users SET display_name = ?, updated_at = ? WHERE id = ?').run(displayName, now, req.user!.id);
+
+  res.json({
+    user: {
+      ...req.user!,
+      displayName,
+    },
+  });
+});
+
 app.get('/api/v1/me', requireAuth, (req: AuthenticatedRequest, res) => {
   const settings = one<{ notification_email: string; daily_digest_enabled: number; watchlist_alert_enabled: number; theme: string; updated_at: string }>(
     'SELECT notification_email, daily_digest_enabled, watchlist_alert_enabled, theme, updated_at FROM user_settings WHERE user_id = ?',

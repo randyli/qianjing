@@ -123,7 +123,7 @@ export default function App() {
       case 'jobs':
         return <Jobs />;
       case 'settings':
-        return <Settings user={currentUser} onLogout={handleLogout} />;
+        return <Settings user={currentUser} onLogout={handleLogout} onUserUpdated={setCurrentUser} />;
       default:
         return <Dashboard onSelectReport={handleSelectReport} />;
     }

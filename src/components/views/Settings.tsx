@@ -7,22 +7,48 @@ import { cn } from '../../utils';
 interface SettingsProps {
   user: CurrentUser | null;
   onLogout: () => void;
+  onUserUpdated: (user: CurrentUser) => void;
 }
 
-export function Settings({ user, onLogout }: SettingsProps) {
+export function Settings({ user, onLogout, onUserUpdated }: SettingsProps) {
   const [activeTab, setActiveTab] = useState('account');
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(user);
+  const [displayName, setDisplayName] = useState(user?.displayName ?? '');
   const [settings, setSettings] = useState<UserSettings>({ notificationEmail: user?.email ?? '', dailyDigestEnabled: true, watchlistAlertEnabled: true, theme: 'dark' });
   const [subscriptionEnd, setSubscriptionEnd] = useState('2026-07-08');
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getSettings().then((payload) => {
+    if (!user) return;
+    setCurrentUser(user);
+    setDisplayName(user.displayName);
+    setSettings((previous) => ({ ...previous, notificationEmail: previous.notificationEmail || user.email }));
+  }, [user]);
+
+  useEffect(() => {
+    api.getMe().then((payload) => {
+      setCurrentUser(payload.user);
+      setDisplayName(payload.user.displayName);
+      onUserUpdated(payload.user);
       if (payload.settings) setSettings(payload.settings);
       if (payload.subscription) setSubscriptionEnd(payload.subscription.currentPeriodEnd.slice(0, 10));
     }).catch(() => undefined);
-  }, []);
+  }, [onUserUpdated]);
 
   const saveSettings = () => {
-    api.updateSettings(settings).then((payload) => setSettings(payload.settings)).catch(() => undefined);
+    setSaveMessage(null);
+    Promise.all([
+      api.updateMe({ displayName }),
+      api.updateSettings(settings),
+    ])
+      .then(([profilePayload, settingsPayload]) => {
+        setCurrentUser(profilePayload.user);
+        setDisplayName(profilePayload.user.displayName);
+        onUserUpdated(profilePayload.user);
+        setSettings(settingsPayload.settings);
+        setSaveMessage('更改已保存。');
+      })
+      .catch((error) => setSaveMessage(error instanceof Error ? error.message : '保存失败，请稍后重试。'));
   };
 
   const tabs = [
@@ -72,11 +98,11 @@ export function Settings({ user, onLogout }: SettingsProps) {
               <div className="p-6 space-y-6">
                 <div className="flex items-center space-x-4">
                   <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 text-xl font-bold">
-                    {(user?.displayName || user?.email || '用户').slice(0, 2).toUpperCase()}
+                    {(displayName || currentUser?.email || '用户').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-200">{user?.displayName ?? '已登录用户'}</p>
-                    <p className="text-xs text-slate-500">{user?.email}</p>
+                    <p className="text-sm font-medium text-slate-200">{displayName || '已登录用户'}</p>
+                    <p className="text-xs text-slate-500">{currentUser?.email}</p>
                   </div>
                   <button onClick={onLogout} className="ml-auto flex items-center px-4 py-2 bg-slate-800 hover:bg-rose-500/10 border border-slate-700 hover:border-rose-500/30 rounded-lg text-sm font-medium text-slate-300 hover:text-rose-300 transition-colors">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -87,13 +113,15 @@ export function Settings({ user, onLogout }: SettingsProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-400">显示名称</label>
-                    <input type="text" value={user?.displayName ?? ''} readOnly className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50" />
+                    <input type="text" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={50} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-400">电子邮件邮箱地址</label>
                     <input type="email" value={settings.notificationEmail} onChange={(event) => setSettings({ ...settings, notificationEmail: event.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50" />
                   </div>
                 </div>
+
+                {saveMessage && <div className="text-sm text-slate-400">{saveMessage}</div>}
 
                 <div className="pt-4 flex justify-end">
                   <button onClick={saveSettings} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors">

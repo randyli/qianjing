@@ -113,6 +113,26 @@ test('health, registration, me, reports filters, and sentiment series match API 
   assert.equal(meJson.user.email, email);
   assert.equal(meJson.settings.notificationEmail, email);
 
+  const headers = { authorization: `Bearer ${registeredToken}`, 'content-type': 'application/json' };
+  const profile = await fetch(`${base}/api/v1/me`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ displayName: '更新后的用户' }),
+  });
+  assert.equal(profile.status, 200);
+  assert.equal((await profile.json()).user.displayName, '更新后的用户');
+
+  const invalidProfile = await fetch(`${base}/api/v1/me`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ displayName: '' }),
+  });
+  assert.equal(invalidProfile.status, 400);
+
+  const updatedMe = await fetch(`${base}/api/v1/me`, { headers });
+  assert.equal(updatedMe.status, 200);
+  assert.equal((await updatedMe.json()).user.displayName, '更新后的用户');
+
   const filtered = await fetch(`${base}/api/v1/reports?premium=false&page=1&pageSize=5`);
   assert.equal(filtered.status, 200);
   const filteredJson = await filtered.json();

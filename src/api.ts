@@ -105,6 +105,10 @@ export const api = {
     return request<{ user: CurrentUser; settings: (UserSettings & { updatedAt?: string }) | null; subscription: { planCode: string; status: string; currentPeriodEnd: string } | null }>('/me', {}, true);
   },
 
+  async updateMe(profile: { displayName: string }) {
+    return request<{ user: CurrentUser }>('/me', { method: 'PATCH', body: JSON.stringify(profile) }, true);
+  },
+
   async listReports(q = '') {
     const params = new URLSearchParams();
     if (q.trim()) params.set('q', q.trim());
