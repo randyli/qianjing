@@ -20,5 +20,5 @@ View your app in AI Studio: https://ai.studio/apps/f9ec2d94-146f-4970-b620-6c9b5
    `npm run dev`
 ## 后台服务规划
 
-本项目当前以前端原型为主，MVP 后台服务规划见 [docs/backend-service-plan.md](docs/backend-service-plan.md)。规划已按轻量方案收敛：数据库暂用 SQLite，暂不引入独立异步任务系统，必要任务先记录到 `jobs` 表。
+本项目当前以前端原型为主，MVP 后台服务规划见 [docs/backend-service-plan.md](docs/backend-service-plan.md)。规划已按轻量方案收敛：建议后续整理为 `frontend/` 与 `backend/` 两个顶层目录；数据库暂用 SQLite，暂不引入独立异步任务系统，必要任务先记录到 `jobs` 表。
 

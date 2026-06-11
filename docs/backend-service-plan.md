@@ -9,6 +9,7 @@ MVP 明确采用以下约束：
 - **数据库暂用 SQLite**：本地开发、演示和小规模部署足够简单；后续如有多用户并发和运维需求，再迁移 PostgreSQL。
 - **不引入独立异步任务系统**：暂不使用 Redis、BullMQ、消息队列或 worker 集群；需要记录后台动作时，先写入 `jobs` 表并由接口或人工流程触发处理。
 - **采用模块化单体**：一个 Node.js 后台服务承载认证、研报、情绪、预警、设置和 AI 任务记录。
+- **目录上建议前后端分开**：采用 `frontend/` 与 `backend/` 两个顶层目录；后台仍是模块化单体，不等于拆微服务。
 - **先做只读与基础写入**：优先支撑 Dashboard、Research、ReportDetail、Sentiment、Alerts、Settings 页面真实数据展示。
 - **保留升级路径**：表结构和接口命名尽量不绑定 SQLite 特性，未来可平滑迁移到 PostgreSQL、队列和对象存储。
 
@@ -25,37 +26,53 @@ MVP 明确采用以下约束：
 | 鉴权 | 简单 JWT + 本地密码哈希 | 后续接 OIDC、SSO 或机构账号体系。 |
 | 观测 | 结构化日志 + 请求 ID | 后续补 OpenTelemetry、Prometheus、Sentry。 |
 
-## 3. 后台目录建议
+## 3. 项目目录建议
 
-MVP 不需要复杂微服务拆分，建议在仓库内新增 `backend/`：
+建议把项目规划成 `frontend/` 和 `backend/` 两个顶层目录。这样做的目的不是把系统做复杂，而是让依赖、脚本、环境变量、构建产物和部署边界更清晰。当前仓库的 React/Vite 文件已经是前端应用，后续新增后台时可以顺手把现有前端文件整体迁入 `frontend/`。
+
+推荐目标结构：
 
 ```text
-backend/
-  src/
-    app.ts
-    config.ts
-    db/
-      client.ts
-      schema.ts
-      seed.ts
-    modules/
-      auth/
-      users/
-      reports/
-      sentiment/
-      alerts/
-      settings/
-      jobs/
-    shared/
-      errors.ts
-      auth.ts
-      pagination.ts
-      validation.ts
-  prisma/ 或 drizzle/
-  uploads/
+qianjing/
+  frontend/
+    src/
+    index.html
+    vite.config.ts
+    package.json
+    tsconfig.json
+  backend/
+    src/
+      app.ts
+      config.ts
+      db/
+        client.ts
+        schema.ts
+        seed.ts
+      modules/
+        auth/
+        users/
+        reports/
+        sentiment/
+        alerts/
+        settings/
+        jobs/
+      shared/
+        errors.ts
+        auth.ts
+        pagination.ts
+        validation.ts
+    prisma/ 或 drizzle/
+    uploads/
+    package.json
+    tsconfig.json
+  docs/
+  package.json
 ```
 
-模块说明：
+根目录 `package.json` 可只保留工作区脚本，例如 `dev` 同时启动前后端，`dev:frontend` 启动 Vite，`dev:backend` 启动 API。MVP 阶段如果暂时不想移动现有前端文件，也可以先在根目录保留前端、只新增 `backend/`；但最终仍建议收敛到上面的双目录结构。
+
+后台模块说明：
+
 
 - **auth**：登录、注册、当前用户、JWT 校验。
 - **users/settings**：用户资料、订阅状态、通知偏好、外观偏好。
@@ -260,8 +277,11 @@ MVP 可以简化架构，但不应省略以下底线：
 
 ## 12. 立即落地事项
 
-1. 新建 `backend/` 工程，选择 Fastify + SQLite + Prisma/Drizzle。
-2. 定义 `reports`、`valuation_points`、`sectors` 三张表并编写 seed 脚本。
-3. 先实现 `GET /api/v1/reports`、`GET /api/v1/reports/:id`、`GET /api/v1/reports/:id/valuation`。
-4. 前端添加 API client，把 Research 和 ReportDetail 从 `mockData` 切到接口。
-5. 再补用户、设置、预警和情绪表，避免一开始引入复杂任务队列和外部服务。
+1. 先确定目录迁移节奏：推荐把现有 React/Vite 前端整体移动到 `frontend/`，再新建 `backend/`；若担心一次性改动过大，也可以先只新增 `backend/`，下一步再迁移前端目录。
+2. 新建 `backend/` 工程，选择 Fastify + SQLite + Prisma/Drizzle。
+3. 根目录保留统一脚本，例如 `dev:frontend`、`dev:backend`、`dev`、`build:frontend`、`build:backend`。
+4. 定义 `reports`、`valuation_points`、`sectors` 三张表并编写 seed 脚本。
+5. 先实现 `GET /api/v1/reports`、`GET /api/v1/reports/:id`、`GET /api/v1/reports/:id/valuation`。
+6. 前端添加 API client，把 Research 和 ReportDetail 从 `mockData` 切到接口。
+7. 再补用户、设置、预警和情绪表，避免一开始引入复杂任务队列和外部服务。
+
