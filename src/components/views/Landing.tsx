@@ -18,13 +18,15 @@ import {
   Zap,
 } from 'lucide-react';
 import type { CurrentUser } from '../../types';
+import { Auth } from './Auth';
 
 interface LandingProps {
   user: CurrentUser | null;
-  onLogin: () => void;
-  onRegister: () => void;
-  onDashboard: () => void;
-  onPublicResearch: () => void;
+  authMode?: 'login' | 'register' | null;
+  onLoginClick: () => void;
+  onRegisterClick: () => void;
+  onExploreClick: () => void;
+  onAuthenticated: (user: CurrentUser) => void;
 }
 
 const capabilities = [
@@ -64,8 +66,8 @@ const previewReports = [
 
 const sentimentBars = [72, 84, 66, 91, 78, 88, 94];
 
-export function Landing({ user, onLogin, onRegister, onDashboard, onPublicResearch }: LandingProps) {
-  const primaryAction = user ? onDashboard : onRegister;
+export function Landing({ user, authMode = null, onLoginClick, onRegisterClick, onExploreClick, onAuthenticated }: LandingProps) {
+  const primaryAction = user ? onAuthenticated.bind(null, user) : onRegisterClick;
   const primaryLabel = user ? '进入仪表盘' : '免费开始';
 
   return (
@@ -75,7 +77,7 @@ export function Landing({ user, onLogin, onRegister, onDashboard, onPublicResear
 
       <div className="relative mx-auto max-w-7xl px-6 py-6 lg:px-8">
         <header className="flex items-center justify-between rounded-2xl border border-slate-800/80 bg-slate-950/70 px-5 py-4 shadow-2xl shadow-slate-950/30 backdrop-blur">
-          <button type="button" onClick={onDashboard} className="flex items-center gap-3">
+          <button type="button" onClick={user ? primaryAction : onExploreClick} className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 shadow-lg shadow-indigo-500/20">
               <Activity className="h-6 w-6 text-white" />
             </span>
@@ -90,7 +92,7 @@ export function Landing({ user, onLogin, onRegister, onDashboard, onPublicResear
 
           <div className="flex items-center gap-3">
             {!user && (
-              <button type="button" onClick={onLogin} className="hidden rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white sm:inline-flex">
+              <button type="button" onClick={onLoginClick} className="hidden rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white sm:inline-flex">
                 登录
               </button>
             )}
@@ -100,6 +102,20 @@ export function Landing({ user, onLogin, onRegister, onDashboard, onPublicResear
             </button>
           </div>
         </header>
+
+
+
+        {authMode && !user && (
+          <section className="py-8" aria-label="认证入口">
+            <Auth
+              key={authMode}
+              title={authMode === 'login' ? '登录 FinSight AI' : '创建 FinSight AI 账户'}
+              message="认证成功后将进入个人化仪表盘，或继续打开您刚才尝试访问的受保护页面。"
+              initialMode={authMode}
+              onAuthenticated={onAuthenticated}
+            />
+          </section>
+        )}
 
         <section className="grid items-center gap-10 py-20 lg:grid-cols-[1.02fr_0.98fr] lg:py-24">
           <div>
@@ -119,7 +135,7 @@ export function Landing({ user, onLogin, onRegister, onDashboard, onPublicResear
                 {primaryLabel}
                 <Zap className="ml-2 h-4 w-4" />
               </button>
-              <button type="button" onClick={onPublicResearch} className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-slate-500 hover:bg-slate-900">
+              <button type="button" onClick={onExploreClick} className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-slate-500 hover:bg-slate-900">
                 进入公开研究
                 <ChevronRight className="ml-2 h-4 w-4" />
               </button>
@@ -253,15 +269,15 @@ export function Landing({ user, onLogin, onRegister, onDashboard, onPublicResear
               立即登录或注册，进入个人化仪表盘；也可以先查看公开研究，了解 FinSight AI 的信息组织方式。
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <button type="button" onClick={onLogin} className="inline-flex items-center justify-center rounded-xl border border-slate-600 bg-slate-950/60 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-slate-400">
+              <button type="button" onClick={onLoginClick} className="inline-flex items-center justify-center rounded-xl border border-slate-600 bg-slate-950/60 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-slate-400">
                 <LockKeyhole className="mr-2 h-4 w-4" />
                 登录
               </button>
-              <button type="button" onClick={onRegister} className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500">
+              <button type="button" onClick={onRegisterClick} className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500">
                 注册免费账户
                 <ArrowRight className="ml-2 h-4 w-4" />
               </button>
-              <button type="button" onClick={onPublicResearch} className="inline-flex items-center justify-center rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-slate-500">
+              <button type="button" onClick={onExploreClick} className="inline-flex items-center justify-center rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-slate-500">
                 进入公开研究
                 <TrendingUp className="ml-2 h-4 w-4" />
               </button>
