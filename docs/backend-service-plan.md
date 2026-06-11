@@ -73,6 +73,7 @@ qianjing/
 
 后台模块说明：
 
+
 - **auth**：登录、注册、当前用户、JWT 校验。
 - **users/settings**：用户资料、订阅状态、通知偏好、外观偏好。
 - **reports**：研报列表、详情、估值数据、发布状态。
@@ -283,3 +284,4 @@ MVP 可以简化架构，但不应省略以下底线：
 5. 先实现 `GET /api/v1/reports`、`GET /api/v1/reports/:id`、`GET /api/v1/reports/:id/valuation`。
 6. 前端添加 API client，把 Research 和 ReportDetail 从 `mockData` 切到接口。
 7. 再补用户、设置、预警和情绪表，避免一开始引入复杂任务队列和外部服务。
+
