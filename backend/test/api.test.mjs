@@ -92,3 +92,74 @@ test('alerts CRUD is scoped behind JWT auth', async () => {
   const remove = await fetch(`${base}/api/v1/alerts/${alert.id}`, { method: 'DELETE', headers });
   assert.equal(remove.status, 204);
 });
+
+
+test('health, registration, me, reports filters, and sentiment series match API plan', async () => {
+  const health = await fetch(`${base}/api/v1/health`);
+  assert.equal(health.status, 200);
+
+  const email = `new-${Date.now()}@example.com`;
+  const register = await fetch(`${base}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password: 'password123', displayName: '新用户' }),
+  });
+  assert.equal(register.status, 201);
+  const registeredToken = (await register.json()).token;
+
+  const me = await fetch(`${base}/api/v1/me`, { headers: { authorization: `Bearer ${registeredToken}` } });
+  assert.equal(me.status, 200);
+  const meJson = await me.json();
+  assert.equal(meJson.user.email, email);
+  assert.equal(meJson.settings.notificationEmail, email);
+
+  const filtered = await fetch(`${base}/api/v1/reports?premium=false&page=1&pageSize=5`);
+  assert.equal(filtered.status, 200);
+  const filteredJson = await filtered.json();
+  assert.ok(filteredJson.data.every((report) => report.isPremium === false));
+  assert.equal(filteredJson.meta.page, 1);
+
+  const series = await fetch(`${base}/api/v1/sentiment/series?limit=3`);
+  assert.equal(series.status, 200);
+  assert.ok((await series.json()).data.length <= 3);
+});
+
+test('jobs can be created, fetched, listed, and run', async () => {
+  const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
+  const create = await fetch(`${base}/api/v1/jobs`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ type: 'generate_report', input: { ticker: 'TEST' } }),
+  });
+  assert.equal(create.status, 201);
+  const job = (await create.json()).data;
+  assert.equal(job.status, 'pending');
+
+  const detail = await fetch(`${base}/api/v1/jobs/${job.id}`, { headers });
+  assert.equal(detail.status, 200);
+  assert.equal((await detail.json()).data.id, job.id);
+
+  const run = await fetch(`${base}/api/v1/jobs/${job.id}/run`, { method: 'POST', headers });
+  assert.equal(run.status, 200);
+  const runJson = await run.json();
+  assert.equal(runJson.data.status, 'succeeded');
+  assert.equal(runJson.data.result.accepted, true);
+
+  const list = await fetch(`${base}/api/v1/jobs?status=succeeded`, { headers });
+  assert.equal(list.status, 200);
+  assert.ok((await list.json()).data.some((item) => item.id === job.id));
+});
+
+test('sentiment recalculation records a succeeded job', async () => {
+  const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
+  const recalculate = await fetch(`${base}/api/v1/sentiment/recalculate`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ reason: 'test' }),
+  });
+  assert.equal(recalculate.status, 201);
+  const payload = await recalculate.json();
+  assert.equal(payload.data.type, 'recalculate_sentiment');
+  assert.equal(payload.data.status, 'succeeded');
+  assert.equal(payload.data.result.recalculated, true);
+});

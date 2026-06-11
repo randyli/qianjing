@@ -62,7 +62,7 @@ export const api = {
   },
 
   async getSentimentPoints() {
-    const payload = await request<ApiEnvelope<SentimentData[]>>('/sentiment/points');
+    const payload = await request<ApiEnvelope<SentimentData[]>>('/sentiment/series');
     return payload.data;
   },
 
