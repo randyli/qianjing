@@ -137,11 +137,26 @@ export function migrate() {
       expires_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS stock_search_index (
+      ts_code TEXT PRIMARY KEY,
+      symbol TEXT NOT NULL,
+      name TEXT NOT NULL,
+      market TEXT,
+      list_date TEXT,
+      pinyin_full TEXT NOT NULL,
+      pinyin_initials TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_reports_published_at ON reports(published_at DESC);
     CREATE INDEX IF NOT EXISTS idx_reports_ticker ON reports(ticker);
     CREATE INDEX IF NOT EXISTS idx_alerts_user ON alerts(user_id);
     CREATE INDEX IF NOT EXISTS idx_sentiment_target ON sentiment_points(target_type, target_key, time_bucket);
     CREATE INDEX IF NOT EXISTS idx_market_data_cache_key ON market_data_cache(cache_key);
     CREATE INDEX IF NOT EXISTS idx_pe_band_snapshots_target ON pe_band_snapshots(ts_code, start_date, end_date);
+    CREATE INDEX IF NOT EXISTS idx_stock_search_symbol ON stock_search_index(symbol);
+    CREATE INDEX IF NOT EXISTS idx_stock_search_pinyin_full ON stock_search_index(pinyin_full);
+    CREATE INDEX IF NOT EXISTS idx_stock_search_pinyin_initials ON stock_search_index(pinyin_initials);
+    CREATE INDEX IF NOT EXISTS idx_stock_search_name ON stock_search_index(name);
   `);
 }

@@ -1,4 +1,4 @@
-import type { AlertTrigger, CurrentUser, JobRecord, Report, SectorAlert, SentimentData, SentimentEvent, UserSettings, PeBandData, ValuationPoint } from './types';
+import type { AlertTrigger, CurrentUser, JobRecord, Report, SectorAlert, SentimentData, SentimentEvent, UserSettings, PeBandData, ValuationPoint, StockSearchResult } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 const AUTH_TOKEN_STORAGE_KEY = 'qianjing.authToken';
@@ -135,6 +135,14 @@ export const api = {
     if (params.endDate) query.set('endDate', params.endDate);
     if (params.multiples?.length) query.set('multiples', params.multiples.join(','));
     const payload = await request<ApiEnvelope<PeBandData>>(`/market/pe-band?${query}`);
+    return payload.data;
+  },
+
+  async searchStocks(q: string, limit = 10, signal?: AbortSignal) {
+    const query = new URLSearchParams();
+    query.set('q', q);
+    query.set('limit', String(limit));
+    const payload = await request<ApiEnvelope<StockSearchResult[]>>(`/market/stocks?${query}`, { signal });
     return payload.data;
   },
 

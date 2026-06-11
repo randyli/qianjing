@@ -1,12 +1,33 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { rmSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { test, before, after } from 'node:test';
 
 const port = 4100 + Math.floor(Math.random() * 1000);
 const base = `http://127.0.0.1:${port}`;
 let server;
 let token;
+
+function insertStockSearchFixtures() {
+  const db = new DatabaseSync('backend/data/test.sqlite');
+  const now = new Date().toISOString();
+  const statement = db.prepare(`
+    INSERT INTO stock_search_index (ts_code, symbol, name, market, list_date, pinyin_full, pinyin_initials, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(ts_code) DO UPDATE SET
+      symbol = excluded.symbol,
+      name = excluded.name,
+      market = excluded.market,
+      list_date = excluded.list_date,
+      pinyin_full = excluded.pinyin_full,
+      pinyin_initials = excluded.pinyin_initials,
+      updated_at = excluded.updated_at
+  `);
+  statement.run('600519.SH', '600519', '贵州茅台', '主板', '20010827', 'guizhoumaotai', 'gzmt', now);
+  statement.run('000001.SZ', '000001', '平安银行', '主板', '19910403', 'pinganyinhang', 'payh', now);
+  db.close();
+}
 
 async function waitForHealth() {
   const deadline = Date.now() + 15000;
@@ -27,6 +48,7 @@ before(async () => {
     stdio: 'pipe',
   });
   await waitForHealth();
+  insertStockSearchFixtures();
   const login = await fetch(`${base}/api/v1/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -168,6 +190,30 @@ test('jobs can be created, fetched, listed, and run', async () => {
   const list = await fetch(`${base}/api/v1/jobs?status=succeeded`, { headers });
   assert.equal(list.status, 200);
   assert.ok((await list.json()).data.some((item) => item.id === job.id));
+});
+
+test('stock search supports symbol, pinyin, initials, name, and priority dedupe', async () => {
+  const cases = [
+    ['600', 'symbol_prefix'],
+    ['600519.s', 'ts_code_prefix'],
+    ['guizhou', 'pinyin_prefix'],
+    ['gzmt', 'initials_prefix'],
+    ['茅台', 'name_contains'],
+  ];
+
+  for (const [query, matchType] of cases) {
+    const response = await fetch(`${base}/api/v1/market/stocks?q=${encodeURIComponent(query)}&limit=10`);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.data[0].tsCode, '600519.SH');
+    assert.equal(payload.data[0].matchType, matchType);
+  }
+
+  const duplicate = await fetch(`${base}/api/v1/market/stocks?q=600519&limit=10`);
+  assert.equal(duplicate.status, 200);
+  const duplicateJson = await duplicate.json();
+  assert.equal(duplicateJson.data.filter((item) => item.tsCode === '600519.SH').length, 1);
+  assert.equal(duplicateJson.data[0].matchType, 'symbol_prefix');
 });
 
 test('sentiment recalculation records a succeeded job', async () => {

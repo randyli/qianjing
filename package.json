@@ -14,7 +14,8 @@
     "seed": "tsx backend/src/db/seed.ts",
     "clean": "rm -rf dist server.js backend/dist backend/data/qianjing.sqlite*",
     "lint": "tsc --noEmit && tsc -p backend/tsconfig.json --noEmit",
-    "test": "node --test backend/test/*.test.mjs"
+    "test": "node --test backend/test/*.test.mjs",
+    "index:stocks": "tsx backend/src/modules/market/scripts/indexStocks.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
