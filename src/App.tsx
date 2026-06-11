@@ -6,6 +6,7 @@ import { Research } from './components/views/Research';
 import { Sentiment } from './components/views/Sentiment';
 import { Alerts } from './components/views/Alerts';
 import { Settings } from './components/views/Settings';
+import { Jobs } from './components/views/Jobs';
 import { ReportDetail } from './components/views/ReportDetail';
 import { View } from './types';
 import { api } from './api';
@@ -72,6 +73,8 @@ export default function App() {
         return <Sentiment />;
       case 'alerts':
         return <Alerts />;
+      case 'jobs':
+        return <Jobs />;
       case 'settings':
         return <Settings />;
       default:

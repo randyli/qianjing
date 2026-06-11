@@ -1,4 +1,4 @@
-import type { Report, SectorAlert, SentimentData, ValuationPoint } from './types';
+import type { AlertTrigger, JobRecord, Report, SectorAlert, SentimentData, SentimentEvent, ValuationPoint } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 const DEMO_EMAIL = import.meta.env.VITE_DEMO_USER_EMAIL ?? 'demo@example.com';
@@ -71,6 +71,11 @@ export const api = {
     return payload.data;
   },
 
+  async getSentimentEvents() {
+    const payload = await request<ApiEnvelope<SentimentEvent[]>>('/sentiment/events');
+    return payload.data;
+  },
+
   async listAlerts() {
     const payload = await request<ApiEnvelope<SectorAlert[]>>('/alerts', {}, true);
     return payload.data;
@@ -86,8 +91,12 @@ export const api = {
     return payload.data;
   },
 
+  async deleteAlert(id: string) {
+    await request<void>(`/alerts/${id}`, { method: 'DELETE' }, true);
+  },
+
   async getAlertTriggers() {
-    const payload = await request<ApiEnvelope<Array<{ id: string; targetKey: string; score: number; message: string; triggeredAt: string }>>>('/alerts/triggers', {}, true);
+    const payload = await request<ApiEnvelope<AlertTrigger[]>>('/alerts/triggers', {}, true);
     return payload.data;
   },
 
@@ -97,5 +106,29 @@ export const api = {
 
   async updateSettings(settings: { notificationEmail: string; dailyDigestEnabled: boolean; watchlistAlertEnabled: boolean; theme: string }) {
     return request<{ settings: { notificationEmail: string; dailyDigestEnabled: boolean; watchlistAlertEnabled: boolean; theme: string } }>('/me/settings', { method: 'PATCH', body: JSON.stringify(settings) }, true);
+  },
+
+  async listJobs(filters: { type?: string; status?: string } = {}) {
+    const params = new URLSearchParams();
+    if (filters.type) params.set('type', filters.type);
+    if (filters.status) params.set('status', filters.status);
+    const suffix = params.toString() ? `?${params}` : '';
+    const payload = await request<ApiEnvelope<JobRecord[]>>(`/jobs${suffix}`, {}, true);
+    return payload.data;
+  },
+
+  async createJob(type: string, input: Record<string, unknown> = {}) {
+    const payload = await request<ApiEnvelope<JobRecord>>('/jobs', { method: 'POST', body: JSON.stringify({ type, input }) }, true);
+    return payload.data;
+  },
+
+  async runJob(id: string) {
+    const payload = await request<ApiEnvelope<JobRecord>>(`/jobs/${id}/run`, { method: 'POST' }, true);
+    return payload.data;
+  },
+
+  async recalculateSentiment(input: Record<string, unknown> = {}) {
+    const payload = await request<ApiEnvelope<JobRecord>>('/sentiment/recalculate', { method: 'POST', body: JSON.stringify(input) }, true);
+    return payload.data;
   },
 };
