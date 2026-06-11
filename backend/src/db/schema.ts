@@ -113,9 +113,35 @@ export function migrate() {
       finished_at TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS market_data_cache (
+      id TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      api_name TEXT NOT NULL,
+      cache_key TEXT NOT NULL UNIQUE,
+      params_json TEXT NOT NULL,
+      data_json TEXT NOT NULL,
+      fetched_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS pe_band_snapshots (
+      id TEXT PRIMARY KEY,
+      ts_code TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      multiples_json TEXT NOT NULL,
+      data_json TEXT NOT NULL,
+      warnings_json TEXT NOT NULL DEFAULT '[]',
+      source_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_reports_published_at ON reports(published_at DESC);
     CREATE INDEX IF NOT EXISTS idx_reports_ticker ON reports(ticker);
     CREATE INDEX IF NOT EXISTS idx_alerts_user ON alerts(user_id);
     CREATE INDEX IF NOT EXISTS idx_sentiment_target ON sentiment_points(target_type, target_key, time_bucket);
+    CREATE INDEX IF NOT EXISTS idx_market_data_cache_key ON market_data_cache(cache_key);
+    CREATE INDEX IF NOT EXISTS idx_pe_band_snapshots_target ON pe_band_snapshots(ts_code, start_date, end_date);
   `);
 }

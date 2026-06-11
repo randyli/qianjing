@@ -1,4 +1,4 @@
-import type { AlertTrigger, CurrentUser, JobRecord, Report, SectorAlert, SentimentData, SentimentEvent, UserSettings, ValuationPoint } from './types';
+import type { AlertTrigger, CurrentUser, JobRecord, Report, SectorAlert, SentimentData, SentimentEvent, UserSettings, PeBandData, ValuationPoint } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 const AUTH_TOKEN_STORAGE_KEY = 'qianjing.authToken';
@@ -124,6 +124,17 @@ export const api = {
 
   async getValuation(id: string) {
     const payload = await request<ApiEnvelope<ValuationPoint[]>>(`/reports/${id}/valuation`);
+    return payload.data;
+  },
+
+  async getPeBand(params: { tsCode: string; range?: string; startDate?: string; endDate?: string; multiples?: number[] }) {
+    const query = new URLSearchParams();
+    query.set('tsCode', params.tsCode);
+    if (params.range) query.set('range', params.range);
+    if (params.startDate) query.set('startDate', params.startDate);
+    if (params.endDate) query.set('endDate', params.endDate);
+    if (params.multiples?.length) query.set('multiples', params.multiples.join(','));
+    const payload = await request<ApiEnvelope<PeBandData>>(`/market/pe-band?${query}`);
     return payload.data;
   },
 

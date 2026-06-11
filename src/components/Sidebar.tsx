@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../utils';
-import { LayoutDashboard, BookOpen, Activity, Bell, Settings, LogOut, TerminalSquare } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Activity, Bell, Settings, LogOut, TerminalSquare, LineChart } from 'lucide-react';
 import { CurrentUser, View } from '../types';
 
 interface SidebarProps {
@@ -15,6 +15,7 @@ export function Sidebar({ currentView, user, onViewChange, onLogout }: SidebarPr
     { id: 'dashboard' as View, label: '仪表盘', icon: LayoutDashboard },
     { id: 'research' as View, label: '研究报告', icon: BookOpen },
     { id: 'sentiment' as View, label: '市场情绪', icon: Activity },
+    { id: 'marketTools' as View, label: '研究工具', icon: LineChart },
     { id: 'alerts' as View, label: '智能预警', icon: Bell },
     { id: 'jobs' as View, label: '任务记录', icon: TerminalSquare },
   ];
