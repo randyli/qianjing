@@ -1,12 +1,22 @@
 import React from 'react';
-import { Search, BellRing, Sparkles } from 'lucide-react';
+import { Search, BellRing, LogIn, LogOut, Sparkles } from 'lucide-react';
+import type { CurrentUser } from '../types';
 
 interface HeaderProps {
   searchTerm: string;
   onSearch: (term: string) => void;
+  user: CurrentUser | null;
+  onAuthClick: () => void;
+  onLogout: () => void;
 }
 
-export function Header({ searchTerm, onSearch }: HeaderProps) {
+function getInitials(user: CurrentUser | null) {
+  if (!user) return '访';
+  const source = user.displayName || user.email;
+  return source.slice(0, 2).toUpperCase();
+}
+
+export function Header({ searchTerm, onSearch, user, onAuthClick, onLogout }: HeaderProps) {
   return (
     <header className="h-16 px-8 border-b border-slate-800 bg-slate-950/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between">
       <div className="flex items-center w-96 relative">
@@ -26,19 +36,30 @@ export function Header({ searchTerm, onSearch }: HeaderProps) {
           AI 引擎已激活
         </div>
         
-        <button className="relative text-slate-400 hover:text-slate-200 transition-colors">
+        <button className="relative text-slate-400 hover:text-slate-200 transition-colors" aria-label="通知">
           <BellRing className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full animate-pulse border border-slate-950"></span>
+          {user && <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full animate-pulse border border-slate-950"></span>}
         </button>
 
         <div className="flex items-center space-x-3 border-l border-slate-800 pl-6">
           <div className="text-right hidden md:block">
-            <p className="text-sm font-medium text-slate-200">投资者 Alex</p>
-            <p className="text-xs text-slate-500">专业版订阅者</p>
+            <p className="text-sm font-medium text-slate-200">{user ? user.displayName : '未登录'}</p>
+            <p className="text-xs text-slate-500">{user ? user.email : '登录后启用个人预警'}</p>
           </div>
           <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-bold">
-            AI
+            {getInitials(user)}
           </div>
+          {user ? (
+            <button onClick={onLogout} className="flex items-center rounded-lg border border-slate-800 px-3 py-2 text-sm text-slate-400 transition-colors hover:border-rose-500/40 hover:text-rose-300">
+              <LogOut className="mr-2 h-4 w-4" />
+              退出
+            </button>
+          ) : (
+            <button onClick={onAuthClick} className="flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500">
+              <LogIn className="mr-2 h-4 w-4" />
+              登录/注册
+            </button>
+          )}
         </div>
       </div>
     </header>

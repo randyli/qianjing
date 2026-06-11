@@ -1,5 +1,19 @@
 export type View = 'dashboard' | 'research' | 'sentiment' | 'alerts' | 'jobs' | 'reportDetail' | 'settings';
 
+export interface CurrentUser {
+  id: string;
+  email: string;
+  displayName: string;
+  role: string;
+}
+
+export interface UserSettings {
+  notificationEmail: string;
+  dailyDigestEnabled: boolean;
+  watchlistAlertEnabled: boolean;
+  theme: string;
+}
+
 export interface ValuationPoint {
   year: string;
   price: number;

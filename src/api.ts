@@ -1,48 +1,110 @@
-import type { AlertTrigger, JobRecord, Report, SectorAlert, SentimentData, SentimentEvent, ValuationPoint } from './types';
+import type { AlertTrigger, CurrentUser, JobRecord, Report, SectorAlert, SentimentData, SentimentEvent, UserSettings, ValuationPoint } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
-const DEMO_EMAIL = import.meta.env.VITE_DEMO_USER_EMAIL ?? 'demo@example.com';
-const DEMO_PASSWORD = import.meta.env.VITE_DEMO_USER_PASSWORD ?? 'password';
+const AUTH_TOKEN_STORAGE_KEY = 'qianjing.authToken';
 
 interface ApiEnvelope<T> {
   data: T;
 }
 
-let tokenPromise: Promise<string> | null = null;
+interface AuthResponse {
+  token: string;
+  user: CurrentUser;
+}
 
-async function getDemoToken() {
-  tokenPromise ??= fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
-  })
-    .then(async (response) => {
-      if (!response.ok) throw new Error('演示用户登录失败');
-      return response.json() as Promise<{ token: string }>;
-    })
-    .then((payload) => payload.token);
+export class AuthRequiredError extends Error {
+  constructor(message = '请先登录后再访问该功能。') {
+    super(message);
+    this.name = 'AuthRequiredError';
+  }
+}
 
-  return tokenPromise;
+let authToken: string | null = readStoredToken();
+
+function readStoredToken() {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+function persistToken(token: string | null) {
+  authToken = token;
+  if (typeof window === 'undefined') return;
+  if (token) {
+    window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+  } else {
+    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  }
+}
+
+function extractErrorMessage(payload: unknown) {
+  if (typeof payload === 'string') return payload;
+  if (payload && typeof payload === 'object') {
+    const error = 'error' in payload ? (payload as { error?: unknown }).error : undefined;
+    if (error && typeof error === 'object' && 'message' in error) {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === 'string') return message;
+    }
+    if ('message' in payload) {
+      const message = (payload as { message?: unknown }).message;
+      if (typeof message === 'string') return message;
+    }
+  }
+  return null;
 }
 
 async function request<T>(path: string, init: RequestInit = {}, authenticated = false): Promise<T> {
   const headers = new Headers(init.headers);
-  headers.set('content-type', 'application/json');
+  if (init.body && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
 
   if (authenticated) {
-    headers.set('authorization', `Bearer ${await getDemoToken()}`);
+    const token = api.getAuthToken();
+    if (!token) throw new AuthRequiredError();
+    headers.set('authorization', `Bearer ${token}`);
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `API 请求失败：${response.status}`);
+    if (response.status === 401 && authenticated) api.clearAuthToken();
+    const contentType = response.headers.get('content-type') ?? '';
+    const payload = contentType.includes('application/json') ? await response.json().catch(() => null) : await response.text();
+    const message = extractErrorMessage(payload);
+    throw response.status === 401 ? new AuthRequiredError(message ?? undefined) : new Error(message || `API 请求失败：${response.status}`);
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
 
 export const api = {
+  getAuthToken() {
+    return authToken ?? readStoredToken();
+  },
+
+  setAuthToken(token: string) {
+    persistToken(token);
+  },
+
+  clearAuthToken() {
+    persistToken(null);
+  },
+
+  async login(email: string, password: string) {
+    const payload = await request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    this.setAuthToken(payload.token);
+    return payload;
+  },
+
+  async register(email: string, password: string, displayName: string) {
+    const payload = await request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, displayName }) });
+    this.setAuthToken(payload.token);
+    return payload;
+  },
+
+  async getMe() {
+    return request<{ user: CurrentUser; settings: (UserSettings & { updatedAt?: string }) | null; subscription: { planCode: string; status: string; currentPeriodEnd: string } | null }>('/me', {}, true);
+  },
+
   async listReports(q = '') {
     const params = new URLSearchParams();
     if (q.trim()) params.set('q', q.trim());
@@ -101,11 +163,11 @@ export const api = {
   },
 
   async getSettings() {
-    return request<{ settings: { notificationEmail: string; dailyDigestEnabled: boolean; watchlistAlertEnabled: boolean; theme: string }; subscription: { planCode: string; status: string; currentPeriodEnd: string } }>('/me/settings', {}, true);
+    return request<{ settings: (UserSettings & { updatedAt?: string }) | null; subscription: { planCode: string; status: string; currentPeriodEnd: string } | null }>('/me/settings', {}, true);
   },
 
-  async updateSettings(settings: { notificationEmail: string; dailyDigestEnabled: boolean; watchlistAlertEnabled: boolean; theme: string }) {
-    return request<{ settings: { notificationEmail: string; dailyDigestEnabled: boolean; watchlistAlertEnabled: boolean; theme: string } }>('/me/settings', { method: 'PATCH', body: JSON.stringify(settings) }, true);
+  async updateSettings(settings: UserSettings) {
+    return request<{ settings: UserSettings & { updatedAt?: string } }>('/me/settings', { method: 'PATCH', body: JSON.stringify(settings) }, true);
   },
 
   async listJobs(filters: { type?: string; status?: string } = {}) {

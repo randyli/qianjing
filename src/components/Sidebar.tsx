@@ -1,14 +1,16 @@
 import React from 'react';
 import { cn } from '../utils';
 import { LayoutDashboard, BookOpen, Activity, Bell, Settings, LogOut, TerminalSquare } from 'lucide-react';
-import { View } from '../types';
+import { CurrentUser, View } from '../types';
 
 interface SidebarProps {
   currentView: View;
+  user: CurrentUser | null;
   onViewChange: (view: View) => void;
+  onLogout: () => void;
 }
 
-export function Sidebar({ currentView, onViewChange }: SidebarProps) {
+export function Sidebar({ currentView, user, onViewChange, onLogout }: SidebarProps) {
   const navItems = [
     { id: 'dashboard' as View, label: '仪表盘', icon: LayoutDashboard },
     { id: 'research' as View, label: '研究报告', icon: BookOpen },
@@ -55,7 +57,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
           <div className="flex items-center space-x-2 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-amber-400">专业版计划</span>
           </div>
-          <p className="text-xs text-slate-400">您已拥有AI洞察和实时情绪数据的完全访问权限。</p>
+          <p className="text-xs text-slate-400">{user ? '您已拥有AI洞察和实时情绪数据的完全访问权限。' : '登录后开启个人预警、任务记录与设置同步。'}</p>
         </div>
         
         <button 
@@ -65,10 +67,12 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
           <Settings className="w-5 h-5 text-slate-500" />
           <span>设置</span>
         </button>
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
-          <LogOut className="w-5 h-5 text-slate-500" />
-          <span>退出登录</span>
-        </button>
+        {user && (
+          <button onClick={onLogout} className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-rose-300 transition-colors">
+            <LogOut className="w-5 h-5 text-slate-500" />
+            <span>退出登录</span>
+          </button>
+        )}
       </div>
     </aside>
   );
