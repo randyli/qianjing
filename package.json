@@ -4,11 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:frontend": "vite --port=3000 --host=0.0.0.0",
+    "dev:backend": "tsx backend/src/server.ts",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "vite build",
+    "build:backend": "tsc -p backend/tsconfig.json --noEmit",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "seed": "tsx backend/src/db/seed.ts",
+    "clean": "rm -rf dist server.js backend/dist backend/data/qianjing.sqlite*",
+    "lint": "tsc --noEmit && tsc -p backend/tsconfig.json --noEmit",
+    "test": "node --test backend/test/*.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

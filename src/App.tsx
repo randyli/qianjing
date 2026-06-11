@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './components/views/Dashboard';
@@ -8,12 +8,15 @@ import { Alerts } from './components/views/Alerts';
 import { Settings } from './components/views/Settings';
 import { ReportDetail } from './components/views/ReportDetail';
 import { View } from './types';
-import { mockReports } from './mockData';
+import { api } from './api';
+import { Report } from './types';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const handleSelectReport = (id: string) => {
     setSelectedReportId(id);
@@ -22,6 +25,7 @@ export default function App() {
 
   const handleBackFromReport = () => {
     setSelectedReportId(null);
+    setSelectedReport(null);
     // Go back to research or dashboard based on your preference, defaulting to research looks good
     setCurrentView('research');
   };
@@ -33,12 +37,30 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (currentView !== 'reportDetail' || !selectedReportId) return;
+
+    let cancelled = false;
+    setReportLoading(true);
+    Promise.all([api.getReport(selectedReportId), api.getValuation(selectedReportId)])
+      .then(([report, valuationData]) => {
+        if (!cancelled) setSelectedReport({ ...report, valuationData });
+      })
+      .finally(() => {
+        if (!cancelled) setReportLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentView, selectedReportId]);
+
   const renderView = () => {
     if (currentView === 'reportDetail' && selectedReportId) {
-      const report = mockReports.find(r => r.id === selectedReportId);
-      if (report) {
-         return <ReportDetail report={report} onBack={handleBackFromReport} />;
+      if (selectedReport) {
+         return <ReportDetail report={selectedReport} onBack={handleBackFromReport} />;
       }
+      return <div className="text-slate-400">{reportLoading ? '正在加载报告...' : '报告不存在。'}</div>;
     }
 
     switch (currentView) {
