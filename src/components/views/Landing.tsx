@@ -67,7 +67,14 @@ const previewReports = [
 const sentimentBars = [72, 84, 66, 91, 78, 88, 94];
 
 export function Landing({ user, authMode = null, onLoginClick, onRegisterClick, onExploreClick, onAuthenticated }: LandingProps) {
-  const primaryAction = user ? onAuthenticated.bind(null, user) : onRegisterClick;
+  const primaryAction = () => {
+    if (user) {
+      onAuthenticated(user);
+      return;
+    }
+
+    onRegisterClick();
+  };
   const primaryLabel = user ? '进入仪表盘' : '免费开始';
 
   return (
